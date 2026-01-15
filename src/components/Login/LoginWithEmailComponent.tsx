@@ -1,18 +1,16 @@
-import { useState } from 'react';
 import {
   Box,
-  FormControl,
-  FormLabel,
-  Input,
-  Checkbox,
-  Stack,
   Button,
-  useColorModeValue,
   Center,
-  PinInput,
-  PinInputField,
   HStack,
+  Input,
+  Stack,
 } from '@chakra-ui/react';
+
+import { Checkbox } from '../../components/ui/checkbox'
+import { Field } from '../../components/ui/field'
+import { PinInput } from '../../components/ui/pin-input'
+import { useState } from 'react';
 
 export default function LoginWithEmailComponent() {
   const [showPinInput, setShowPinInput] = useState(false);
@@ -26,30 +24,23 @@ export default function LoginWithEmailComponent() {
   return (
     <Box
       rounded={'lg'}
-      bg={useColorModeValue('white', 'gray.700')}
+      bg={{ base: 'white', _dark: 'gray.700' }}
       boxShadow={'lg'}
       p={8}>
-      <Stack spacing={4}>
-        <FormControl id="qq">
-          <FormLabel>QQ</FormLabel>
+      <Stack gap={4}>
+        <Field label="QQ">
           <Input type="email" />
-        </FormControl>
+        </Field>
         {showPinInput && (
-          <FormControl id="pin">
-            <FormLabel>验证码</FormLabel>
+          <Field label="验证码">
             <Center>
               <HStack>
-                <PinInput>
-                  <PinInputField />
-                  <PinInputField />
-                  <PinInputField />
-                  <PinInputField />
-                </PinInput>
+                <PinInput count={4} />
               </HStack>
             </Center>
-          </FormControl>
+          </Field>
         )}
-        <Stack spacing={10}>
+        <Stack gap={10}>
           <Stack
             direction={{ base: 'column', sm: 'row' }}
             align={'start'}

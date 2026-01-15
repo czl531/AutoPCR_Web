@@ -1,6 +1,7 @@
-import { Accordion, AccordionButton, AccordionIcon, AccordionItem, AccordionPanel, Box, Image, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react'
-import { ResultInfo as ResultInfoInterface } from '@interfaces/UserInfo'
+import { Accordion, Box, Image, Tabs } from '@chakra-ui/react'
 import { FiAlertCircle, FiCheckCircle, FiXCircle } from 'react-icons/fi'
+
+import { ResultInfo as ResultInfoInterface } from '@interfaces/UserInfo'
 import { ResultTable } from './ResultTable'
 
 export interface ResultInfoProps {
@@ -9,53 +10,44 @@ export interface ResultInfoProps {
 
 function ResultDetail({ url }: { url: string }) {
     return (
-        <Tabs isLazy variant='soft-rounded'>
-            <TabList>
-                <Tab>文本</Tab>
-                <Tab>图片</Tab>
-            </TabList>
-            <TabPanels>
-                <TabPanel>
-                    <ResultTable url={url + "?text=true"} />
-                </TabPanel>
-                <TabPanel>
-                    <Image
-                        src={url}
-                        width="100%"
-                        height="100%"
-                    />
-                </TabPanel>
-            </TabPanels>
-        </Tabs>
+        <Tabs.Root lazyMount variant='subtle' defaultValue="text">
+            <Tabs.List>
+                <Tabs.Trigger value="text">文本</Tabs.Trigger>
+                <Tabs.Trigger value="image">图片</Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content value="text">
+                <ResultTable url={url + "?text=true"} />
+            </Tabs.Content>
+            <Tabs.Content value="image">
+                <Image
+                    src={url}
+                    width="100%"
+                    height="100%"
+                />
+            </Tabs.Content>
+        </Tabs.Root>
     )
 }
 
 export function ResultInfo({ resultInfo }: ResultInfoProps) {
     return (
-        <Accordion allowToggle>
+        <Accordion.Root collapsible lazyMount>
             {
                 resultInfo.map((info, index) => (
-                    <AccordionItem key={index}>
-                        {({ isExpanded }) => (
-                            <>
-                                <h2>
-                                    <AccordionButton>
-                                        {info.status == "成功" || info.status == '跳过' ? <FiCheckCircle /> : info.status == "警告" || info.status == '中止' ? <FiAlertCircle /> : <FiXCircle />}
-                                        <Box as='span' flex='1' textAlign='left'>
-                                            {info.time} {info.alias}
-                                        </Box>
-                                        <AccordionIcon />
-                                    </AccordionButton>
-                                </h2>
-                                <AccordionPanel pb={4}>
-                                    {isExpanded && <ResultDetail url={info.url} />}
-                                </AccordionPanel>
-                            </>
-                        )}
-
-                    </AccordionItem>
+                    <Accordion.Item key={index} value={String(index)}>
+                        <Accordion.ItemTrigger>
+                            {info.status == "成功" || info.status == '跳过' ? <FiCheckCircle /> : info.status == "警告" || info.status == '中止' ? <FiAlertCircle /> : <FiXCircle />}
+                            <Box as='span' flex='1' textAlign='left'>
+                                {info.time} {info.alias}
+                            </Box>
+                            <Accordion.ItemIndicator />
+                        </Accordion.ItemTrigger>
+                        <Accordion.ItemContent pb={4}>
+                            <ResultDetail url={info.url} />
+                        </Accordion.ItemContent>
+                    </Accordion.Item>
                 ))
             }
-        </Accordion >
+        </Accordion.Root>
     )
 }

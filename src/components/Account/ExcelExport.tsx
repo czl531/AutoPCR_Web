@@ -88,7 +88,7 @@ export default function ExcelExport({ header, data }: iTableResult) {
     }
 
     return (
-        <Button onClick={handleExport} colorScheme="teal">
+        <Button onClick={handleExport} colorPalette="teal">
             导出 Excel
         </Button>
     )

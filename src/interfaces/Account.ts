@@ -52,3 +52,14 @@ export interface ValidateResponse {
   status: string;
   url: string;
 }
+
+export interface RunningStatus{
+  name: string;
+  running: number;
+  max_running: number;
+  waiting: number;
+}
+
+export interface RunningStatusResponse {
+  statuses: RunningStatus[];
+}

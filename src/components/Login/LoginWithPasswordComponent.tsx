@@ -1,24 +1,29 @@
 import {
     Box,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    Checkbox,
-    Stack,
     Button,
-    Tooltip,
+    Input,
+    Stack,
     Text,
-    createStandaloneToast,
-    useTheme,
 } from '@chakra-ui/react'
-import { useForm, SubmitHandler } from 'react-hook-form'
+import {
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+} from '../../components/ui/modal'
+import { SubmitHandler, useForm } from 'react-hook-form'
+
+import { Checkbox } from '../../components/ui/checkbox'
+import { Field } from '../../components/ui/field'
+import { Route as InfoRoute } from '@routes/daily/_sidebar/account/index'
 import { postLoginWithPassword } from '@api/Login'
 import { postRegister } from '@api/Register'
+import { toaster } from '../../components/ui/toaster'
 import { useNavigate } from '@tanstack/react-router'
-import { Route as InfoRoute } from '@routes/daily/_sidebar/account/index'
 import { useState } from 'react'
-import { AxiosError } from 'axios'
 
 interface Inputs {
     qq: string
@@ -27,14 +32,13 @@ interface Inputs {
 
 export default function LoginWithPasswordComponent() {
     const navigate = useNavigate();
-    const theme = useTheme();
-    const { toast } = createStandaloneToast({ theme });
     const {
         handleSubmit,
         register,
         formState: { isSubmitting, errors },
     } = useForm<Inputs>()
     const [remember, setRemember] = useState<boolean>(localStorage.getItem('remember') === 'true' ? true : false);
+    const [isForgotOpen, setIsForgotOpen] = useState(false);
 
     const handleRember = (values: Inputs) => {
         localStorage.setItem('remember', remember ? 'true' : 'false');
@@ -47,80 +51,62 @@ export default function LoginWithPasswordComponent() {
         }
     }
 
-    const handleLogin: SubmitHandler<Inputs> = (values) => {
-        postLoginWithPassword(values.qq, values.password)
-            .then(async (res) => {
-                handleRember(values);
-                toast({ title: "登录成功", status: "success", description: res })
-                await navigate({ to: InfoRoute.to })
-            }).catch((err: AxiosError) => {
-                toast({ title: "登录失败", status: "error", description: err.response?.data as string || "网络错误" })
-            });
+    const handleLogin: SubmitHandler<Inputs> = async (values) => {
+        const res = await postLoginWithPassword(values.qq, values.password);
+        handleRember(values);
+        toaster.create({ title: "登录成功", type: "success", description: res });
+        await navigate({ to: InfoRoute.to });
     }
 
-    const handleRegister: SubmitHandler<Inputs> = (values) => {
-        postRegister(values.qq, values.password)
-            .then(async (res) => {
-                handleRember(values);
-                toast({ title: "注册成功", status: "success", description: res })
-                await navigate({ to: InfoRoute.to })
-            }).catch((err: AxiosError) => {
-                toast({ title: "注册失败", status: "error", description: err.response?.data as string || "网络错误" })
-            });
+    const handleRegister: SubmitHandler<Inputs> = async (values) => {
+        const res = await postRegister(values.qq, values.password);
+        handleRember(values);
+        toaster.create({ title: "注册成功", type: "success", description: res });
+        await navigate({ to: InfoRoute.to });
     }
 
     return (
-        <Box
-            rounded={'lg'}
-            p={8}>
+        <Box w="full">
             <form onSubmit={handleSubmit(handleLogin)}>
-                <Stack spacing={4}>
-                    <FormControl id="qq">
-                        <FormLabel>QQ</FormLabel>
+                <Stack gap={4}>
+                    <Field invalid={!!errors.qq} label="QQ" errorText={errors.qq?.message}>
                         <Input type="text"
                             {...register('qq')}
                             placeholder='5位以上'
                             defaultValue={localStorage.getItem('qq') as (string | undefined)}
                         />
-                        <FormErrorMessage>
-                            {errors.qq?.message}
-                        </FormErrorMessage>
-                    </FormControl>
-                    <FormControl id="password">
-                        <FormLabel>密码</FormLabel>
+                    </Field>
+                    <Field invalid={!!errors.password} label="密码" errorText={errors.password?.message}>
                         <Input type="password"
                             {...register('password')}
                             placeholder='8位以上,非QQ密码'
                             defaultValue={localStorage.getItem('password') as (string | undefined)}
                         />
-                        <FormErrorMessage>
-                            {errors.password?.message}
-                        </FormErrorMessage>
-                    </FormControl>
-                    <Stack spacing={10}>
+                    </Field>
+                    <Stack gap={10}>
                         <Stack
                             direction={{ base: 'column', sm: 'row' }}
                             align={'start'}
                             justify={'space-between'}>
-                            <Checkbox defaultChecked={remember} checked={remember} onChange={(e) => setRemember(e.target.checked)}>记住我</Checkbox>
-                            <Tooltip label="联系维护人员"><Text color={'blue.400'}> 忘记密码？</Text></Tooltip>
+                            <Checkbox checked={remember} onCheckedChange={(e) => setRemember(!!e.checked)}>记住我</Checkbox>
+                            <Text 
+                                color="fg.muted" 
+                                fontSize="sm" 
+                                cursor="pointer" 
+                                _hover={{ color: "fg.emphasized", textDecoration: "underline" }}
+                                onClick={() => setIsForgotOpen(true)}
+                            >
+                                忘记密码？
+                            </Text>
                         </Stack>
                         <Button
-                            bg={'blue.400'}
-                            color={'white'}
-                            _hover={{
-                                bg: 'blue.500',
-                            }}
-                            isLoading={isSubmitting} type='submit'
+                            colorPalette="brand"
+                            loading={isSubmitting} type='submit'
                         >
                             登录
                         </Button>
                         <Button
-                            bg={'blue.400'}
-                            color={'white'}
-                            _hover={{
-                                bg: 'blue.500',
-                            }}
+                            colorPalette="brand"
                             onClick={handleSubmit(handleRegister)}
                         >
                             注册
@@ -128,6 +114,20 @@ export default function LoginWithPasswordComponent() {
                     </Stack>
                 </Stack>
             </form>
+
+            <Modal isOpen={isForgotOpen} onClose={() => setIsForgotOpen(false)}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>忘记密码</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Text>如需重置密码，请联系系统维护人员。</Text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button onClick={() => setIsForgotOpen(false)}>我知道了</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Box>
     )
 }

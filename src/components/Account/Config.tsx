@@ -1,10 +1,16 @@
-import { ConfigInfo, ConfigValue } from '@/interfaces/Module';
-import { Switch, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper, Input, InputGroup, InputLeftAddon, InputRightAddon, Select, useToast, CheckboxGroup, Checkbox, Stack, Box, useColorModeValue, Textarea, Text, Button } from '@chakra-ui/react'
-import { putAccountConfig } from '@/api/Account';
+import { Box, Button, Checkbox as ChakraCheckbox, Input, NativeSelect, Stack, Text, Textarea } from '@chakra-ui/react'
 import { ChangeEventHandler, FocusEventHandler, useState } from 'react';
+import { ConfigInfo, ConfigValue } from '@/interfaces/Module';
+import { NumberInput, NumberInputField } from '../../components/ui/number-input';
+
 import { AxiosError } from 'axios';
+import { Checkbox } from '../../components/ui/checkbox';
+import { InputGroup } from '../../components/ui/input-group';
 import NiceModal from '@ebay/nice-modal-react';
+import { Switch } from '../../components/ui/switch';
 import multiSelectModal from './MultiSelectModal';
+import { putAccountConfig } from '@/api/Account';
+import { toaster } from '../../components/ui/toaster';
 
 interface ConfigProps {
     alias: string,
@@ -33,88 +39,75 @@ export default function Config({ alias, value, info }: ConfigProps) {
 }
 
 function ConfigBool({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
-
-    const onChange: ChangeEventHandler<HTMLInputElement> = (e: React.ChangeEvent<HTMLInputElement>) => {
-        putAccountConfig(alias, info.key, e.target.checked).then((res) => {
-            toast({ status: 'success', title: '保存成功', description: res });
+    const onCheckedChange = (details: { checked: boolean }) => {
+        putAccountConfig(alias, info.key, details.checked).then((res) => {
+            toaster.create({ type: 'success', title: '保存成功', description: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
+            toaster.create({ type: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
         });
     }
 
     return (
-        <InputGroup>
-            <InputLeftAddon>
-                {info.desc}
-            </InputLeftAddon>
-            <InputRightAddon>
-                <Switch id={info.key} defaultChecked={value as boolean} onChange={onChange} />
-            </InputRightAddon>
+        <InputGroup startElement={info.desc} endElement={
+            <Switch id={info.key} defaultChecked={value as boolean} onCheckedChange={onCheckedChange} />
+        }>
         </InputGroup>
     )
 }
 
 function ConfigInt({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
     const onChange = (_: string, valueAsNumber: number) => {
         putAccountConfig(alias, info.key, valueAsNumber).then((res) => {
-            toast({ status: 'success', title: '保存成功', description: res });
+            toaster.create({ type: 'success', title: '保存成功', description: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
+            toaster.create({ type: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
         });
     }
 
+    // NumberInput deprecated onChange signature: (valueAsString, valueAsNumber).
+    // V3 NumberInput snippet might not support onValueChange with number?
+    // Chakra V3 NumberInput.Root has onValueChange: (details: { value: string; valueAsNumber: number }) => void.
+    // My snippet uses ChakraNumberInput.Root.
+    // So onValueChange={(e) => onChange(e.value, e.valueAsNumber)}
+    
     return (
-        <InputGroup>
-            <InputLeftAddon>
-                {info.desc}
-            </InputLeftAddon>
-
-            <NumberInput onChange={onChange} id={info.key} defaultValue={value as number} min={Math.min(...info.candidates.map(c => c.value) as number[])} max={Math.max(...info.candidates.map(c => c.value) as number[])}>
+        <InputGroup startElement={info.desc}>
+            <NumberInput onValueChange={(e) => onChange(e.value, e.valueAsNumber)} id={info.key} defaultValue={String(value)} min={Math.min(...info.candidates.map(c => c.value) as number[])} max={Math.max(...info.candidates.map(c => c.value) as number[])}>
                 <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
             </NumberInput>
         </InputGroup>
     )
 }
 
 function ConfigSingle({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
     const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         let value: ConfigValue = e.target.value;
         const intValue = Number(value);
         if (!isNaN(intValue))
             value = intValue;
         putAccountConfig(alias, info.key, value).then((res) => {
-            toast({ status: 'success', title: '保存成功', description: res });
+            toaster.create({ type: 'success', title: '保存成功', description: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
+            toaster.create({ type: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
         });
     }
 
     return (
-        <InputGroup>
-            <InputLeftAddon>
-                {info.desc}
-            </InputLeftAddon>
-
-            <Select onChange={onChange} id={info.key} defaultValue={value as string | number} >
+        <InputGroup startElement={info.desc}>
+            <NativeSelect.Root>
+            <NativeSelect.Field onChange={onChange} id={info.key} defaultValue={value as string | number}>
                 {
                     info.candidates.map((element) => {
                         return <option key={element.value as string | number} value={element.value as string | number} >{element.display}</option>
                     })
                 }
-            </Select>
+            </NativeSelect.Field>
+            </NativeSelect.Root>
         </InputGroup>
     )
 }
 
 function ConfigMulti({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
     const onChange = (value: (string | number)[]) => {
         let postValue = value;
         const intValue = postValue.map(option => Number(option))
@@ -122,61 +115,54 @@ function ConfigMulti({ alias, value, info }: ConfigProps) {
             postValue = intValue;
 
         putAccountConfig(alias, info.key, postValue as ConfigValue).then((res) => {
-            toast({ status: 'success', title: '保存成功', description: res });
+            toaster.create({ type: 'success', title: '保存成功', description: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
+            toaster.create({ type: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
         });
     }
+    // CheckboxGroup onChange expects (value: string[]). My code expects (string | number)[]. 
+    // V3 Checkbox.Group onValueChange: (details: { value: string[] }) => void.
+    // So I need to adapt.
+    
     return (
-        <InputGroup>
-            <InputLeftAddon style={{ height: 'auto' }}>
-                {info.desc}
-            </InputLeftAddon>
-
-            <Box paddingLeft="16px" paddingRight="32px" overflowY="scroll" borderWidth="1px" borderColor={useColorModeValue("gray.200", "gray.600")} borderRadius="md">
-                <CheckboxGroup onChange={onChange} defaultValue={(value as (string | number)[]).map(option => String(option))} >
-                    <Stack spacing={[1, 5]} direction={['column', 'row']}>
+        <InputGroup startElement={info.desc}>
+            <Box paddingLeft="16px" paddingRight="32px" overflowY="scroll" borderWidth="1px" borderColor="border.subtle" borderRadius="md" w="full">
+                <ChakraCheckbox.Group onValueChange={(e) => onChange(e)} defaultValue={(value as (string | number)[]).map(option => String(option))} >
+                    <Stack gap={[1, 5]} direction={['column', 'row']}>
                         {
                             info.candidates.map((element) => {
-                                return <Checkbox key={element.value as string | number} value={String(element.value) as string | number} >{element.display}</Checkbox>
+                                return <Checkbox key={element.value as string | number} value={String(element.value)} >{element.display}</Checkbox>
                             })
                         }
                     </Stack>
-                </CheckboxGroup>
+                </ChakraCheckbox.Group>
             </Box>
-
         </InputGroup >
     )
 }
 
 function ConfigTime({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
     const onBlur: ChangeEventHandler<HTMLInputElement> = (e: React.ChangeEvent<HTMLInputElement>) => {
         putAccountConfig(alias, info.key, e.target.value as ConfigValue).then((res) => {
-            toast({ status: 'success', title: '保存成功', description: res });
+            toaster.create({ type: 'success', title: '保存成功', description: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
+            toaster.create({ type: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
         });
     }
 
     return (
-        <InputGroup>
-            <InputLeftAddon>
-                {info.desc}
-            </InputLeftAddon>
-
+        <InputGroup startElement={info.desc}>
             <Input type='time' onBlur={onBlur} id={info.key} defaultValue={value as string} />
         </InputGroup>
     )
 }
 
 function ConfigText({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
     const onBlur: FocusEventHandler<HTMLTextAreaElement> = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         putAccountConfig(alias, info.key, e.target.value as ConfigValue).then((res) => {
-            toast({ status: 'success', title: '保存成功', description: res });
+            toaster.create({ type: 'success', title: '保存成功', description: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
+            toaster.create({ type: 'error', title: '保存失败', description: err.response?.data as string || "网络错误" });
         });
     }
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -192,40 +178,38 @@ function ConfigText({ alias, value, info }: ConfigProps) {
 }
 
 function ConfigMultiSearch({ alias, value, info }: ConfigProps) {
-    const toast = useToast();
     const [localValue, setLocalValue] = useState<ConfigValue>(value);
 
-    const displayValue = (localValue as number[]).map((id) => {
+    const displayValue = ((localValue || []) as number[]).map((id) => {
         const unit = info.candidates.find((unit) => unit.value === id);
         return unit ? (unit.nickname ? unit.nickname : unit.display) : String(id);
     });
 
-    const handleClick = async (): Promise<void> => {
+    const handleClick = async (e: React.MouseEvent): Promise<void> => {
+        e.stopPropagation();
         
         try {
-            const ret: ConfigValue = await NiceModal.show<ConfigValue>('multiSelectModal', {
+            const ret: ConfigValue = await NiceModal.show(multiSelectModal, {
                 candidates: info.candidates,
-                value: localValue,
-            });
+                value: localValue as ConfigValue[],
+            }) as ConfigValue;
+            if (ret === undefined) return;
+            
             const res: string = await putAccountConfig(alias, info.key, ret);
             setLocalValue(ret);
-            toast({ status: "success", title: "保存成功", description: res });
+            toaster.create({ type: "success", title: "保存成功", description: res });
             await NiceModal.hide(multiSelectModal);
         } catch (err) {
             const axiosErr = err as AxiosError;
-            toast({ status: "error", title: "保存失败", description: axiosErr.response?.data as string || "网络错误" });
+            toaster.create({ type: "error", title: "保存失败", description: axiosErr.response?.data as string || "网络错误" });
         }
     };
 
     return (
-        <InputGroup>
-            <InputLeftAddon>
-                {info.desc}
-            </InputLeftAddon>
-            <Input value={displayValue} isReadOnly onClick={handleClick} cursor="pointer" />
-            <InputRightAddon>
-                <Button size="sm" onClick={handleClick}>选择</Button>
-            </InputRightAddon>
+        <InputGroup startElement={info.desc} endElement={
+            <Button size="sm" onClick={handleClick}>选择</Button>
+        }>
+            <Input value={displayValue.join(', ')} readOnly onClick={handleClick} cursor="pointer" />
         </InputGroup>
     );
 }

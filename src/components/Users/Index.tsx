@@ -1,29 +1,32 @@
 import {
     Button,
-    Card, CardBody, CardFooter, CardHeader,
-    Checkbox,
-    CloseButton,
+    Card,
     Flex,
     SimpleGrid,
-    Spacer,
     Stack,
-    Switch, Text,
-    useDisclosure, useToast
+    Text,
+    useDisclosure,
+    Box,
+    HStack,
+    Badge
 } from "@chakra-ui/react";
-import Alert from "@components/alert.tsx";
 import React, { useEffect, useState } from "react";
-import { FocusableElement } from "@chakra-ui/utils";
-import { FiUnlock } from "react-icons/fi";
 import { deleteUser, getAllUsers, getClanForbid, putUser, useUserRole } from "@api/Account.ts";
+
+import Alert from "@components/alert.tsx";
 import { AxiosError } from "axios";
-import { UserInfo } from "@interfaces/UserInfo.ts";
-import createUserModal from "./CreateUserModal";
+import { Checkbox } from '../../components/ui/checkbox'
+import { CloseButton } from '../../components/ui/close-button'
+import { FiUnlock, FiPlus, FiShield, FiUser } from "react-icons/fi";
 import NiceModal from "@ebay/nice-modal-react";
+import { Switch } from '../../components/ui/switch'
+import { UserInfo } from "@interfaces/UserInfo.ts";
 import clanForbid from "./ChangeClanForbidUserModal";
+import createUserModal from "./CreateUserModal";
 import resetPasswdModal from "./ResetPasswdModal";
+import { toaster } from '../../components/ui/toaster'
 
 export default function Users() {
-    const toast = useToast()
 
     const freshUserInfo = useDisclosure();
     const [users, setUsers] = useState<UserInfo[]>();
@@ -32,9 +35,9 @@ export default function Users() {
         getAllUsers().then((res) => {
             setUsers(res);
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: err?.response?.data as string || '网络错误' });
+            toaster.create({ type: 'error', title: err?.response?.data as string || '网络错误' });
         });
-    }, [freshUserInfo.isOpen, toast]);
+    }, [freshUserInfo.open]);
 
     const role = useUserRole();
 
@@ -48,20 +51,26 @@ export default function Users() {
         getClanForbid().then(async (res) => {
             await NiceModal.show(clanForbid, { accs: res });
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: err?.response?.data as string || '网络错误' });
+            toaster.create({ type: 'error', title: err?.response?.data as string || '网络错误' });
         })
     }
 
 
     return (
-        <Stack height={'100%'}>
-            <Stack>
-                <SimpleGrid spacing={2} templateColumns='repeat(auto-fill, minmax(100px, 1fr))'>
-                    <Button colorScheme="blue" onClick={createUser}>创建用户</Button>
-                    <Button colorScheme="blue" onClick={setClanForbid}>设置会战禁用</Button>
-                </SimpleGrid>
-            </Stack>
-            <SimpleGrid spacing={4} templateColumns='repeat(auto-fill, minmax(250px, 1fr))'>
+        <Stack height={'100%'} p={4} gap={6}>
+            <Card.Root variant="elevated" bg="bg.panel" shadow="sm" borderRadius="2xl">
+                <Card.Body py={3} px={4}>
+                    <Flex justify="space-between" align="center">
+                        <Text fontSize="lg" fontWeight="bold">用户管理</Text>
+                        <HStack gap={3}>
+                           <Button size="sm" variant="surface" colorPalette="blue" onClick={createUser}><FiPlus /> 创建用户</Button>
+                           <Button size="sm" variant="surface" colorPalette="orange" onClick={setClanForbid}><FiShield /> 会战禁用</Button>
+                        </HStack>
+                    </Flex>
+                </Card.Body>
+            </Card.Root>
+
+            <SimpleGrid gap={4} templateColumns='repeat(auto-fill, minmax(280px, 1fr))'>
                 {
                     users?.map((user) => {
                         // 仅超管可更改管理员用户
@@ -89,8 +98,7 @@ interface UserInfoProps {
 }
 
 function UserInfoItem({ qq, userDisabled, clan, admin, accountCount, allowManage, allowEdit, onToggle }: UserInfoProps) {
-    const cancelRef = React.useRef<FocusableElement>(null)
-    const toast = useToast()
+    const cancelRef = React.useRef<HTMLButtonElement>(null)
 
     const deleteConfirm = useDisclosure()
     const handleDeleteUser = () => {
@@ -98,11 +106,11 @@ function UserInfoItem({ qq, userDisabled, clan, admin, accountCount, allowManage
             return
         }
         deleteUser(qq).then((res) => {
-            toast({ status: 'success', title: `删除用户${qq}成功`, description: res });
+            toaster.create({ type: 'success', title: `删除用户${qq}成功`, description: res });
             deleteConfirm.onClose()
             onToggle()
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: err?.response?.data as string || '网络错误' });
+            toaster.create({ type: 'error', title: err?.response?.data as string || '网络错误' });
         });
     }
 
@@ -111,11 +119,11 @@ function UserInfoItem({ qq, userDisabled, clan, admin, accountCount, allowManage
             return
         }
         putUser(qq, userInfo).then((res) => {
-            toast({ status: 'success', title: `更新用户${qq}成功`, description: res });
+            toaster.create({ type: 'success', title: `更新用户${qq}成功`, description: res });
             onSuccess()
             onToggle()
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: err?.response?.data as string || '网络错误' });
+            toaster.create({ type: 'error', title: err?.response?.data as string || '网络错误' });
         });
     }
     const disableConfirm = useDisclosure()
@@ -145,32 +153,90 @@ function UserInfoItem({ qq, userDisabled, clan, admin, accountCount, allowManage
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <Flex>
-                    <Switch isChecked={!userDisabled} onChange={disableConfirm.onOpen} isDisabled={!allowEdit}>{qq}</Switch>
-                    <Spacer />
-                    <CloseButton aria-label="DeleteAccount" onClick={deleteConfirm.onOpen} isDisabled={!allowEdit} />
-                    <Alert leastDestructiveRef={cancelRef} isOpen={deleteConfirm.isOpen} onClose={deleteConfirm.onClose}
-                        title="删除用户" body={`确定删除用户${qq}吗？`} onConfirm={handleDeleteUser}> </Alert>
-                    <Alert leastDestructiveRef={cancelRef} isOpen={disableConfirm.isOpen} onClose={disableConfirm.onClose}
+        <Card.Root 
+            bg="bg.panel" 
+            shadow="sm" 
+            borderRadius="2xl" 
+            borderWidth="1px" 
+            borderColor="border.subtle"
+            transition="all 0.2s"
+            _hover={{ shadow: 'md', transform: 'translateY(-2px)', borderColor: "blue.400" }}
+        >
+            <Card.Header pb={2}>
+                <Flex justify="space-between" align="center">
+                    <HStack>
+                        <Box 
+                            w="40px" h="40px" 
+                            borderRadius="full" 
+                            bg={userDisabled ? "gray.100" : "blue.50"} 
+                            color={userDisabled ? "gray.500" : "blue.600"}
+                            display="flex" alignItems="center" justifyContent="center"
+                            fontSize="xl"
+                        >
+                            <FiUser />
+                        </Box>
+                        <Stack gap={0}>
+                            <Text fontWeight="bold" fontSize="md">{qq}</Text>
+                             <Badge colorPalette={userDisabled ? "gray" : "green"} variant="subtle">
+                                {userDisabled ? "已禁用" : "正常"}
+                            </Badge>
+                        </Stack>
+                    </HStack>
+
+                    <CloseButton 
+                        size="sm" 
+                        variant="ghost" 
+                        colorPalette="gray"
+                        _hover={{ bg: "red.100", color: "red.600" }}
+                        onClick={deleteConfirm.onOpen} 
+                        disabled={!allowEdit} 
+                    />
+                    
+                    <Alert leastDestructiveRef={cancelRef} isOpen={deleteConfirm.open} onClose={deleteConfirm.onClose}
+                        title="删除用户" body={`确定删除用户${qq}吗？`} onConfirm={handleDeleteUser}/>
+                    <Alert leastDestructiveRef={cancelRef} isOpen={disableConfirm.open} onClose={disableConfirm.onClose}
                         title={`${userDisabled ? "启用" : "禁用"}用户`} body={`确定${userDisabled ? "启用" : "禁用"}用户${qq}吗？`}
-                        onConfirm={handleDisableUser}> </Alert>
+                        onConfirm={handleDisableUser}/>
                 </Flex>
-            </CardHeader>
-            <CardBody>
-                <Stack>
-                    <Text>{`${accountCount} 个账户`}</Text>
-                    <Checkbox isChecked={clan} onChange={handleClanUser} isDisabled={!allowManage}>公会管理</Checkbox>
-                    <Checkbox isChecked={admin} onChange={handleAdminUser} isDisabled={!allowManage}>管理员</Checkbox>
+            </Card.Header>
+            <Card.Body py={3}>
+                <Stack gap={3}>
+                    <Flex justify="space-between" align="center" bg="bg.subtle" p={2} borderRadius="md">
+                        <Text fontSize="sm" color="fg.muted">管理账户数</Text>
+                        <Text fontWeight="bold">{accountCount}</Text>
+                    </Flex>
+                    
+                    <HStack justify="space-between">
+                         <Flex align="center" gap={2}>
+                            <Text fontSize="sm">启用状态</Text>
+                            <Switch 
+                                size="sm" 
+                                colorPalette="green"
+                                checked={!userDisabled} 
+                                onCheckedChange={disableConfirm.onOpen} 
+                                disabled={!allowEdit} 
+                            />
+                         </Flex>
+                    </HStack>
+
+                    <Stack gap={2}>
+                         <Checkbox variant="subtle" colorPalette="purple" checked={admin} onCheckedChange={handleAdminUser} disabled={!allowManage}>管理员权限</Checkbox>
+                         <Checkbox variant="subtle" colorPalette="orange" checked={clan} onCheckedChange={handleClanUser} disabled={!allowManage}>公会管理权限</Checkbox>
+                    </Stack>
                 </Stack>
-            </CardBody>
-            <CardFooter>
-                <SimpleGrid columns={2} spacing={4}>
-                    <Button colorScheme='pink' aria-label="UserResetPassword" leftIcon={<FiUnlock />}
-                        onClick={startRstPwd} isDisabled={!allowEdit}>重设密码</Button>
-                </SimpleGrid>
-            </CardFooter>
-        </Card>
+            </Card.Body>
+            <Card.Footer pt={0}>
+                <Button 
+                    w="full" 
+                    variant="surface" 
+                    colorPalette="pink" 
+                    size="sm" 
+                    onClick={startRstPwd} 
+                    disabled={!allowEdit}
+                >
+                    <FiUnlock /> 重设密码
+                </Button>
+            </Card.Footer>
+        </Card.Root>
     )
 }

@@ -1,59 +1,47 @@
-import React, { ChangeEvent } from 'react';
-import { clearAccounts, deleteAccount, getAccountDailyResultList, getUserInfo, postAccountSyncConfig, putUserInfo } from '@api/Account';
 import { AccountInfo as AccountInfoInterface, UserInfoResponse } from '@interfaces/UserInfo';
 import {
-    RadioGroup,
-    Radio,
-    Button,
-    Input,
-    Stack,
-    Card,
-    CardHeader,
-    CardBody,
-    CardFooter,
-    CloseButton,
-    Flex,
-    Spacer,
     Box,
-    Tag,
-    TagLeftIcon,
-    TagLabel,
-    SimpleGrid,
-    useToast,
-    Text,
-    Table,
-    Thead,
-    Tbody,
-    Tr,
-    Th,
-    Td,
-    Checkbox,
+    Button,
+    Card,
+    Flex,
     HStack,
-    IconButton,
-    Tooltip,
-    useColorModeValue,
+    Input,
+    SimpleGrid,
+    Spacer,
+    Stack,
+    Table,
+    Tag,
+    Text,
 } from '@chakra-ui/react';
-
-import { Route as DashBoardRoute } from '@routes/daily/_sidebar/account/index';
-import { Route as LoginRoute } from '@routes/daily/login';
-import { FiActivity, FiCopy, FiSettings, FiTarget, FiUser, FiGrid, FiList, FiUserMinus, FiUserPlus, FiUpload, FiKey, FiUserX, FiLayers, FiStar, FiCheck } from 'react-icons/fi';
-import { postAccountImport, delAccount, postAccount, postAccountAreaDaily } from '@api/Account';
-import { useDisclosure } from '@chakra-ui/react';
+import { FiActivity, FiBook, FiCheck, FiCopy, FiGrid, FiKey, FiLayers, FiList, FiSettings, FiStar, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { Radio, RadioGroup } from '../../components/ui/radio';
+import React, { ChangeEvent } from 'react';
+import { Skeleton, SkeletonText } from '../../components/ui/skeleton';
+import { clearAccounts, deleteAccount, getAccountDailyResultList, getUserInfo, putUserInfo } from '@api/Account';
+import { delAccount, postAccount, postAccountAreaDaily, postAccountImport } from '@api/Account';
 import { useEffect, useState } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
-import ResultInfoModal from './ResultInfoModal';
-import ReadmeModal from './ReadmeModal';
+
 import Alert from '../alert';
+import { AxiosError } from 'axios';
+import { Checkbox } from '../../components/ui/checkbox';
+import { CloseButton } from '../../components/ui/close-button';
+import { Route as DashBoardRoute } from '@routes/daily/_sidebar/account/index';
+import { IconButton } from '../../components/ui/icon-button';
+import { Route as LoginRoute } from '@routes/daily/login';
+import NiceModal from '@ebay/nice-modal-react';
+import ReadmeModal from './ReadmeModal';
+import ResultInfoModal from './ResultInfoModal';
+import { Tooltip } from '../../components/ui/tooltip';
+import resetPasswdModal from '../Users/ResetPasswdModal';
+import { toaster } from '../../components/ui/toaster';
+import { useCountHook } from '../count';
+import { useDisclosure } from '@chakra-ui/react';
+import ConfigSyncModal from './ConfigSyncModal';
 
 const handle: Map<string, (arg0: boolean) => void> = new Map<string, (arg0: boolean) => void>();
-import { FocusableElement } from '@chakra-ui/utils';
-import { useCountHook } from '../count';
-import { AxiosError } from 'axios';
-import resetPasswdModal from '../Users/ResetPasswdModal';
 
 export function DashBoard() {
-    const toast = useToast();
     const [userInfo, setUserInfo] = useState<UserInfoResponse>();
     const freshAccountInfo = useDisclosure();
     const creatAccountSwitch = useDisclosure();
@@ -66,12 +54,8 @@ export function DashBoard() {
         return savedView ? savedView === 'table' : false;
     });
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
-    // 添加颜色模式相关的值
-    const tableBgColor = useColorModeValue('white', 'gray.800');
-    const tableHeaderBgColor = useColorModeValue('#F5F7FA', 'gray.800');
-    const tableContainerBgColor = useColorModeValue('gray.100', 'gray.900');
-    const tableRowBgColor = useColorModeValue('white', 'gray.700');
-    const statusSuccessColor = useColorModeValue('#5cb85c', 'green.400');
+    
+    // Status colors can remain as functional colors
 
     const showReadme = () => {
         NiceModal.show(ReadmeModal, {})
@@ -97,18 +81,18 @@ export function DashBoard() {
                 setUserInfo(res);
             })
             .catch((err: AxiosError) => {
-                toast({ status: 'error', title: (err?.response?.data as string) || '网络错误' });
+                toaster.create({ type: 'error', title: (err?.response?.data as string) || '网络错误' });
             });
-    }, [freshAccountInfo.isOpen, toast]);
+    }, [freshAccountInfo.open]);
 
     const handleDefaultAccount = (value: string) => {
         putUserInfo({ default_account: value })
             .then((res) => {
                 setUserInfo({ ...userInfo, default_account: value });
-                toast({ status: 'success', title: '设置默认账号成功', description: res });
+                toaster.create({ type: 'success', title: '设置默认账号成功', description: res });
             })
             .catch((err: AxiosError) => {
-                toast({ status: 'error', title: '设置默认账号失败', description: (err?.response?.data as string) || '网络错误' });
+                toaster.create({ type: 'error', title: '设置默认账号失败', description: (err?.response?.data as string) || '网络错误' });
             });
     };
 
@@ -117,7 +101,7 @@ export function DashBoard() {
             .then((value) => {
                 putUserInfo({ password: value as string })
                     .then((res) => {
-                        toast({ status: 'success', title: '修改密码成功', description: res });
+                        toaster.create({ type: 'success', title: '修改密码成功', description: res });
                         NiceModal.hide(resetPasswdModal)
                             .then(() => {
                                 return;
@@ -127,7 +111,7 @@ export function DashBoard() {
                             });
                     })
                     .catch((err: AxiosError) => {
-                        toast({ status: 'error', title: '修改密码失败', description: (err?.response?.data as string) || '网络错误' });
+                        toaster.create({ type: 'error', title: '修改密码失败', description: (err?.response?.data as string) || '网络错误' });
                     });
             })
             .catch(() => {
@@ -184,11 +168,11 @@ export function DashBoard() {
     };
 
     const handleCreateAccount = () => {
-        if (creatAccountSwitch.isOpen) {
+        if (creatAccountSwitch.open) {
             // 检查alias是否为空
             if (!alias || alias.trim() === '') {
-                toast({
-                    status: 'error',
+                toaster.create({
+                    type: 'error',
                     title: '创建账号失败',
                     description: '账号昵称不能为空',
                 });
@@ -197,8 +181,8 @@ export function DashBoard() {
 
             postAccount(alias)
                 .then((res) => {
-                    toast({
-                        status: 'success',
+                    toaster.create({
+                        type: 'success',
                         title: '创建账号成功',
                         description: res,
                     });
@@ -207,8 +191,8 @@ export function DashBoard() {
                     freshAccountInfo.onToggle();
                 })
                 .catch((err: AxiosError) => {
-                    toast({
-                        status: 'error',
+                    toaster.create({
+                        type: 'error',
                         title: '创建账号失败',
                         description: (err?.response?.data as string) || '网络错误',
                     });
@@ -223,331 +207,308 @@ export function DashBoard() {
         if (file) {
             postAccountImport(file)
                 .then((res) => {
-                    toast({ status: 'success', title: '导入账号成功', description: res });
+                    toaster.create({ type: 'success', title: '导入账号成功', description: res });
                     freshAccountInfo.onToggle();
                 })
                 .catch((err: AxiosError) => {
-                    toast({ status: 'error', title: '导入账号失败', description: (err?.response?.data as string) || '网络错误' });
+                    toaster.create({ type: 'error', title: '导入账号失败', description: (err?.response?.data as string) || '网络错误' });
                 });
         }
     };
 
-    const cancelRef = React.useRef<FocusableElement>(null);
+    const cancelRef = React.useRef<HTMLButtonElement>(null);
 
     const navigate = useNavigate();
 
     const handleDeleteAccount = () => {
         deleteAccount()
             .then(async (res) => {
-                toast({ status: 'success', title: '删除QQ成功', description: res });
+                toaster.create({ type: 'success', title: '删除QQ成功', description: res });
                 deleteQQConfirm.onToggle();
                 await navigate({ to: LoginRoute.to });
             })
             .catch((err: AxiosError) => {
-                toast({ status: 'error', title: '删除QQ失败', description: (err?.response?.data as string) || '网络错误' });
+                toaster.create({ type: 'error', title: '删除QQ失败', description: (err?.response?.data as string) || '网络错误' });
             });
     };
 
     const handleClearAccounts = () => {
         clearAccounts()
             .then((res) => {
-                toast({ status: 'success', title: '清除账号成功', description: res });
+                toaster.create({ type: 'success', title: '清除账号成功', description: res });
                 clearAccountConfirm.onToggle();
                 freshAccountInfo.onToggle();
             })
             .catch((err: AxiosError) => {
-                toast({ status: 'error', title: '清除账号失败', description: (err?.response?.data as string) || '网络错误' });
+                toaster.create({ type: 'error', title: '清除账号失败', description: (err?.response?.data as string) || '网络错误' });
             });
     };
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     return (
-        <Stack height={'100%'}>
-            <Box>
-                <HStack spacing={2} flexWrap="wrap" alignItems="center">
-                    <Tag size="lg" variant="subtle" colorScheme="cyan" onClick={() => showReadme()}>
-                        <TagLeftIcon boxSize="12px" as={FiUser} />
-                        <TagLabel>{userInfo?.qq}</TagLabel>
-                    </Tag>
-                    <Button size="sm" colorScheme="blue" fontWeight="normal" leftIcon={<FiKey />} onClick={handleResetPassword}>
-                        修改密码
-                    </Button>
-                    <Button size="sm" colorScheme="red" fontWeight="normal" leftIcon={<FiUserX />} onClick={deleteQQConfirm.onOpen}>
-                        注销QQ
-                    </Button>
-                    <Alert leastDestructiveRef={cancelRef} isOpen={deleteQQConfirm.isOpen} onClose={deleteQQConfirm.onClose} title="删除QQ" body={`确定删除QQ${userInfo?.qq}吗？`} onConfirm={handleDeleteAccount}>
-                        {' '}
-                    </Alert>
-                </HStack>
-            </Box>
-            <Stack>
-                <SimpleGrid spacing={2} templateColumns="repeat(auto-fill, minmax(100px, 1fr))">
-                    <Button colorScheme="orange" fontWeight="normal" leftIcon={<FiTarget />} onClick={handleCleanDailyAll} isLoading={count != 0}>
-                        {isTableView && selectedAccounts.length > 0 ? `清选择(${selectedAccounts.length})` : '清理全部'}
+        <Stack gap={4} h="full" w="full" p={4} position="relative" zIndex={1}>
+            {/* Dashboard Header - Minimalist */}
+            <Card.Root variant="elevated" bg="bg.glass" backdropFilter="blur(12px)" shadow="sm" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle">
+                <Card.Body py={2} px={4}>
+                    <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+                        <Box>
+                            <Text fontSize="md" fontWeight="bold">
+                                {!userInfo ? <Skeleton height="20px" width="100px" /> : `欢迎回来, ${userInfo.qq}`}
+                            </Text>
+                        </Box>
+
+                        <HStack gap={2}>
+                            <Button size="xs" variant="surface" colorPalette="teal" onClick={showReadme}>
+                                <FiBook /> 使用须知
+                            </Button>
+                            <Button size="xs" variant="surface" colorPalette="blue" onClick={handleResetPassword}>
+                                <FiKey /> 修改密码
+                            </Button>
+                            <Button size="xs" variant="surface" colorPalette="red" onClick={deleteQQConfirm.onOpen}>
+                                <FiUserX /> 注销QQ
+                            </Button>
+                        </HStack>
+                    </Flex>
+                </Card.Body>
+            </Card.Root>
+
+            <Alert leastDestructiveRef={cancelRef} isOpen={deleteQQConfirm.open} onClose={deleteQQConfirm.onClose} title="删除QQ" body={`确定删除QQ${userInfo?.qq}吗？`} onConfirm={handleDeleteAccount}>
+                {' '}
+            </Alert>
+
+            {/* Action Toolbar */}
+            <Flex 
+                bg="bg.panel" 
+                p={2} 
+                borderRadius="xl" 
+                shadow="sm" 
+                borderWidth="1px" 
+                borderColor="border.subtle"
+                align="center"
+                wrap="wrap"
+                gap={2}
+            >
+                {/* Left Actions: Batch Operations */}
+                <HStack gap={2}>
+                     <Button 
+                        size="sm" 
+                        colorPalette="orange" 
+                        variant="ghost"
+                        onClick={handleCleanDailyAll} 
+                        loading={count != 0}
+                    >
+                        <FiTarget /> {isTableView && selectedAccounts.length > 0 ? `清选择(${selectedAccounts.length})` : '清理全部'}
                     </Button>
                     <Button
                         as={Link}
-                        colorScheme="blue"
-                        fontWeight="normal"
-                        leftIcon={<FiLayers />}
-                        to={`${DashBoardRoute.to || ''}BATCH_RUNNER`} // 确保 DashBoardRoute.to 有值
-                        isLoading={count != 0}
+                        size="sm"
+                        colorPalette="blue"
+                        variant="ghost"
+                        // @ts-ignore
+                        to={`${DashBoardRoute.to || ''}BATCH_RUNNER`} 
+                        loading={count != 0}
                     >
-                        批量运行
+                        <FiLayers /> 批量运行
                     </Button>
-                    <Tooltip label={isTableView ? '切换到卡片视图' : '切换到表格视图'}>
-                        <Button
-                            colorScheme="teal"
-                            fontWeight="normal"
-                            onClick={() => {
-                                const newViewMode = !isTableView;
-                                setIsTableView(newViewMode);
-                                // 保存视图设置到 localStorage
-                                localStorage.setItem('accountViewMode', newViewMode ? 'table' : 'card');
-                            }}
-                            leftIcon={isTableView ? <FiGrid /> : <FiList />}
-                        >
-                            {isTableView ? '卡片视图' : '表格视图'}
-                        </Button>
-                    </Tooltip>
+                </HStack>
 
-                    {isTableView && (
-                        <>
-                            {/* 将设为默认和同步配置组合成一个按钮组 */}
-                            <HStack spacing={0} borderRadius="md" border="1px solid" borderColor="gray.200" bg="white" _dark={{ borderColor: 'gray.600', bg: 'gray.800' }} overflow="hidden">
-                                <Tooltip label={selectedAccounts.length !== 1 ? '请选择一个账号作为配置源' : `将其他账号配置同步为 ${selectedAccounts[0]} 的配置`}>
-                                    <IconButton
-                                        aria-label="同步配置"
-                                        icon={<FiCopy size="22px" />}
-                                        variant="ghost"
-                                        colorScheme="gray"
-                                        _hover={{ bg: 'teal.400', clor: 'white' }}
-                                        borderRadius="0"
-                                        flex="1" // 使用flex:1使按钮平分宽度
-                                        onClick={() => {
-                                            if (selectedAccounts.length === 1) {
-                                                const accountName = selectedAccounts[0];
-                                                if (window.confirm(`确定将其他账号配置同步为${accountName}的配置吗？`)) {
-                                                    postAccountSyncConfig(accountName)
-                                                        .then((res) => {
-                                                            toast({
-                                                                status: 'success',
-                                                                title: `同步${accountName}配置成功`,
-                                                                description: res,
-                                                            });
-                                                        })
-                                                        .catch((err: AxiosError) => {
-                                                            toast({
-                                                                status: 'error',
-                                                                title: '同步配置失败',
-                                                                description: (err?.response?.data as string) || '网络错误',
-                                                            });
-                                                        });
-                                                }
-                                            }
-                                        }}
-                                        isDisabled={selectedAccounts.length !== 1}
-                                    />
-                                </Tooltip>
+                <Spacer />
 
-                                <Tooltip label={selectedAccounts.length !== 1 ? '请选择一个账号设为默认' : `将 ${selectedAccounts[0]} 设为默认账号`}>
-                                    <IconButton
-                                        aria-label="设为默认账号"
-                                        icon={<FiStar size="22px" />}
-                                        variant="ghost"
-                                        colorScheme="gray"
-                                        _hover={{ bg: 'purple.400', clor: 'white' }}
-                                        borderRadius="0"
-                                        borderLeft="1px solid"
-                                        borderColor="gray.300"
-                                        flex="1"
-                                        onClick={() => {
-                                            if (selectedAccounts.length === 1) {
-                                                handleDefaultAccount(selectedAccounts[0]);
-                                            }
-                                        }}
-                                        isDisabled={selectedAccounts.length !== 1}
-                                    />
-                                </Tooltip>
-                            </HStack>
-                        </>
+                {/* Right Actions: View Switch & Account Manage */}
+                <HStack gap={2}>
+                    {/* View Switcher */}
+                    <Box bg="bg.subtle" p={1} borderRadius="md" display="flex">
+                        <Tooltip content="表格视图">
+                            <IconButton 
+                                aria-label="List view"
+                                size="xs" 
+                                variant={isTableView ? "solid" : "ghost"} 
+                                colorPalette={isTableView ? "blue" : "gray"}
+                                onClick={() => {
+                                    setIsTableView(true);
+                                    localStorage.setItem('accountViewMode', 'table');
+                                }}
+                            >
+                                <FiList />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip content="卡片视图">
+                            <IconButton 
+                                aria-label="Grid view"
+                                size="xs" 
+                                variant={!isTableView ? "solid" : "ghost"} 
+                                colorPalette={!isTableView ? "blue" : "gray"}
+                                onClick={() => {
+                                    setIsTableView(false);
+                                    localStorage.setItem('accountViewMode', 'card');
+                                }}
+                            >
+                                <FiGrid />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+
+                    {/* Sync & Default (only for Table && Single Select) */}
+                    {isTableView && selectedAccounts.length === 1 && (
+                        <HStack gap={1} separator={<Box w="1px" h="15px" bg="border.subtle" />}>
+                             <Tooltip content={`将其他账号配置同步为 ${selectedAccounts[0]} 的配置`}>
+                                <IconButton
+                                    aria-label="Sync configuration"
+                                    size="sm"
+                                    variant="ghost"
+                                    colorPalette="teal"
+                                    onClick={() => {
+                                        NiceModal.show(ConfigSyncModal, { sourceAccount: selectedAccounts[0] });
+                                    }}
+                                > <FiCopy /> </IconButton>
+                            </Tooltip>
+                            <Tooltip content={`将 ${selectedAccounts[0]} 设为默认账号`}>
+                                <IconButton
+                                    aria-label="Set as default"
+                                    size="sm"
+                                    variant="ghost"
+                                    colorPalette="purple"
+                                    onClick={() => handleDefaultAccount(selectedAccounts[0])}
+                                > <FiStar /> </IconButton>
+                            </Tooltip>
+                        </HStack>
                     )}
-                    {/* 账号管理按钮组 */}
-                    <HStack
-                        spacing={0}
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="gray.200"
-                        bg="white"
-                        _dark={{ borderColor: 'gray.600', bg: 'gray.800' }}
-                        overflow="hidden"
-                        flex="1"
-                        justifyContent="space-between" // 均匀分布按钮
-                    >
+                    
+                    {/* Add / Import / Delete Group */}
+                     <HStack gap={1}>
                         {userInfo?.clan && (
-                            <Box flex="1" display="flex" justifyContent="center">
-                                <Tooltip label="账号导入">
-                                    <IconButton
-                                        aria-label="账号导入"
-                                        icon={<FiUpload size="22px" />}
-                                        variant="ghost"
-                                        colorScheme="gary"
-                                        _hover={{ bg: 'blue.400', clor: 'white' }}
-                                        borderRadius="0"
-                                        size="sm"
-                                        w="100%"
-                                        h="40px"
-                                        onClick={() => {
-                                            if (fileInputRef.current) fileInputRef.current.click();
-                                        }}
-                                    />
-                                </Tooltip>
-                            </Box>
+                            <Tooltip content="导入账号 (TSV)">
+                                <IconButton
+                                    aria-label="Import accounts"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => fileInputRef.current?.click()}
+                                > <FiUpload /> </IconButton>
+                            </Tooltip>
                         )}
                         <Input
                             ref={fileInputRef}
                             type="file"
                             accept=".tsv"
                             onChange={handleAccountImport}
-                            onClick={(e) => {
-                                (e.target as HTMLInputElement).value = '';
-                            }}
+                            onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                             display="none"
                         />
+                                
 
-                        <Box flex="1" display="flex" justifyContent="center" borderLeft={userInfo?.clan ? '1px solid' : 'none'} borderColor="gray.300">
-                            <Tooltip label={isTableView && selectedAccounts.length > 0 ? `删除选中(${selectedAccounts.length})` : '删除全部'}>
-                                <IconButton
-                                    aria-label="删除账号"
-                                    icon={<FiUserMinus size="22px" />}
-                                    variant="ghost"
-                                    colorScheme="gary"
-                                    _hover={{ bg: 'red.400', clor: 'white' }}
-                                    borderRadius="0"
-                                    size="sm"
-                                    w="100%"
-                                    h="40px"
-                                    onClick={() => {
-                                        if (isTableView && selectedAccounts.length > 0) {
-                                            // 删除选中的账号
-                                            if (window.confirm(`确定删除选中的 ${selectedAccounts.length} 个账号吗？`)) {
-                                                const deletePromises = selectedAccounts.map((accountName) => delAccount(accountName));
-
-                                                Promise.all(deletePromises)
-                                                    .then(() => {
-                                                        toast({
-                                                            status: 'success',
-                                                            title: '删除账号成功',
-                                                            description: `已删除 ${selectedAccounts.length} 个账号`,
-                                                        });
-                                                        setSelectedAccounts([]);
-                                                        freshAccountInfo.onToggle();
-                                                    })
-                                                    .catch((err: AxiosError) => {
-                                                        toast({
-                                                            status: 'error',
-                                                            title: '删除账号失败',
-                                                            description: (err?.response?.data as string) || '网络错误',
-                                                        });
-                                                    });
-                                            }
-                                        } else {
-                                            // 清除所有账号
-                                            clearAccountConfirm.onOpen();
+                         <Tooltip content={isTableView && selectedAccounts.length > 0 ? `删除选中(${selectedAccounts.length})` : '删除全部'}>
+                            <IconButton
+                                aria-label="Delete selected accounts"
+                                size="sm"
+                                variant="outline"
+                                colorPalette="red"
+                                onClick={() => {
+                                    if (isTableView && selectedAccounts.length > 0) {
+                                        if (window.confirm(`确定删除选中的 ${selectedAccounts.length} 个账号吗？`)) {
+                                            Promise.all(selectedAccounts.map((name) => delAccount(name)))
+                                                .then(() => {
+                                                    toaster.create({ type: 'success', title: '删除成功' });
+                                                    setSelectedAccounts([]);
+                                                    freshAccountInfo.onToggle();
+                                                })
+                                                .catch((err) => toaster.create({ type: 'error', title: '删除失败', description: (err?.response?.data as string) || '网络错误' }));
                                         }
-                                    }}
-                                />
-                            </Tooltip>
-                        </Box>
-
-                        <Box flex="1" display="flex" justifyContent="center" borderLeft="1px solid" borderColor="gray.300">
-                            <Tooltip label={creatAccountSwitch.isOpen ? '提交' : '创建账号'}>
+                                    } else {
+                                        clearAccountConfirm.onOpen();
+                                    }
+                                }}
+                            > <FiUserMinus /> </IconButton>
+                        </Tooltip>
+                        <Box position="relative">
+                            <Tooltip content={creatAccountSwitch.open ? '取消创建' : '创建新账号'}>
                                 <IconButton
-                                    aria-label="创建账号"
-                                    icon={creatAccountSwitch.isOpen ? <FiCheck size="22px" /> : <FiUserPlus size="22px" />}
-                                    variant="ghost"
-                                    colorScheme={creatAccountSwitch.isOpen ? 'green.300' : 'gray'}
-                                    bg={creatAccountSwitch.isOpen ? 'green.400' : 'transparent'}
-                                    color={creatAccountSwitch.isOpen ? 'white' : 'inherit'}
-                                    _hover={{
-                                        bg: 'green.400',
-                                    }}
-                                    borderRadius="0"
+                                    aria-label={creatAccountSwitch.open ? "Confirm creation" : "Create account"}
                                     size="sm"
-                                    w="100%"
-                                    h="40px"
-                                    onClick={handleCreateAccount}
-                                />
+                                    variant={creatAccountSwitch.open ? "solid" : "solid"}
+                                    colorPalette={creatAccountSwitch.open ? "red" : "green"}
+                                    onClick={() => {
+                                        if(creatAccountSwitch.open && !alias) creatAccountSwitch.onToggle(); // Close if empty
+                                        else if (creatAccountSwitch.open && alias) handleCreateAccount(); // Submit
+                                        else creatAccountSwitch.onToggle(); // Open
+                                    }}
+                                > 
+                                    {creatAccountSwitch.open ? <FiCheck /> : <FiUserPlus />} 
+                                </IconButton>
                             </Tooltip>
                         </Box>
-                    </HStack>
+                     </HStack>
+                </HStack>
+            </Flex>
 
-                    {creatAccountSwitch.isOpen && (
-                        <Input
-                            isRequired
-                            placeholder="请输入昵称"
-                            onChange={(e) => {
-                                setAlias(e.target.value);
-                            }}
-                        />
-                    )}
-                    <Alert leastDestructiveRef={cancelRef} isOpen={clearAccountConfirm.isOpen} onClose={clearAccountConfirm.onClose} title="删除所有账号" body={`确定删除所有账号吗？`} onConfirm={handleClearAccounts}>
-                        {' '}
-                    </Alert>
-                </SimpleGrid>
-            </Stack>
+            {/* Inline Account Creation Input */}
+            {creatAccountSwitch.open && (
+                <Flex 
+                    bg="bg.panel" 
+                    p={4} 
+                    borderRadius="xl" 
+                    shadow="sm" 
+                    borderWidth="1px" 
+                    borderColor="green.subtle" 
+                    align="center" 
+                    gap={4}
+                    animation="fade-in 0.2s"
+                >
+                    <Text fontWeight="bold" whiteSpace="nowrap">新账号名称:</Text>
+                    <Input
+                        autoFocus
+                        placeholder="请输入游戏账号昵称..."
+                        value={alias}
+                        onChange={(e) => setAlias(e.target.value)}
+                        onKeyDown={(e) => { if(e.key === 'Enter') handleCreateAccount() }}
+                    />
+                    <Button size="sm" colorPalette="green" onClick={handleCreateAccount}>创建</Button>
+                </Flex>
+            )}
 
+            <Alert leastDestructiveRef={cancelRef} isOpen={clearAccountConfirm.open} onClose={clearAccountConfirm.onClose} title="删除所有账号" body={`确定删除所有账号吗？`} onConfirm={handleClearAccounts}>
+                {' '}
+            </Alert>
+            
             {isTableView ? (
-                <Box flex={1} overflow={'auto'} bg={tableContainerBgColor} borderRadius="md">
-                    <Table variant="simple" colorScheme="blue" size="sm" bg={tableBgColor} borderRadius="md" boxShadow="md" ml="0" mr="auto">
-                        <Thead position="sticky" top={0} bg={tableHeaderBgColor} zIndex={1} boxShadow="sm">
-                            <Tr>
-                                <Th px={3} fontSize="md" py={4} fontWeight="bold" width="5%">
+                <Box flex={1} overflow={'auto'} borderRadius="xl">
+                    <Table.Root variant="outline" colorPalette="blue" size="sm" bg="bg.panel" borderRadius="xl" boxShadow="sm" ml="0" mr="auto">
+                        <Table.Header position="sticky" top={0} bg="bg.subtle" zIndex={1} boxShadow="sm">
+                            <Table.Row>
+                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="5%">
                                     <Checkbox
-                                        isChecked={selectedAccounts.length > 0 && selectedAccounts.length === userInfo?.accounts?.length}
-                                        isIndeterminate={selectedAccounts.length > 0 && selectedAccounts.length < (userInfo?.accounts?.length ?? 0)}
-                                        onChange={toggleSelectAll}
-                                        colorScheme="blue"
+                                        checked={
+                                            (selectedAccounts.length > 0 && selectedAccounts.length < (userInfo?.accounts?.length ?? 0))
+                                                ? "indeterminate"
+                                                : (selectedAccounts.length > 0 && selectedAccounts.length === userInfo?.accounts?.length)
+                                        }
+                                        onCheckedChange={toggleSelectAll}
+                                        colorPalette="blue"
                                     />
-                                </Th>
-                                <Th px={0} fontSize="md" py={4} fontWeight="bold" width="25%" minWidth="80px">
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader px={0} fontSize="md" py={4} fontWeight="bold" width="25%" minWidth="80px">
                                     账号
-                                </Th>
-                                <Th px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
                                     最近记录
-                                </Th>
-                                <Th px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
                                     操作
-                                </Th>
-                            </Tr>
-                        </Thead>
-                        <Tbody>
-                            {userInfo?.accounts?.map((account) => (
-                                <AccountInfo
-                                    key={account.name}
-                                    account={account}
-                                    onToggle={freshAccountInfo.onToggle}
-                                    increaseCount={increaseCount}
-                                    decreaseCount={decreaseCount}
-                                    updateAccountInfo={updateAccountInfo}
-                                    isTableView={isTableView}
-                                    isSelected={selectedAccounts.includes(account.name)}
-                                    onToggleSelect={() => toggleSelectAccount(account.name)}
-                                    statusSuccessColor={statusSuccessColor}
-                                    tableBgColor={tableRowBgColor}
-                                    defaultAccount={userInfo?.default_account}
-                                />
-                            ))}
-                        </Tbody>
-                    </Table>
-                </Box>
-            ) : (
-                <RadioGroup onChange={handleDefaultAccount} value={userInfo?.default_account} flex={1} overflow={'auto'}>
-                    <Stack>
-                        <SimpleGrid spacing={4} templateColumns="repeat(auto-fill, minmax(250px, 1fr))">
-                            {userInfo?.accounts?.map((account) => {
-                                return (
+                                </Table.ColumnHeader>
+                            </Table.Row>
+                        </Table.Header>
+                        <Table.Body>
+                            {!userInfo ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <Table.Row key={i} bg="transparent">
+                                        <Table.Cell px={3} py={2}><Skeleton height="20px" width="20px" /></Table.Cell>
+                                        <Table.Cell px={0} py={2}><Skeleton height="20px" width="80%" /></Table.Cell>
+                                        <Table.Cell px={3} py={2}><Skeleton height="20px" width="60%" /></Table.Cell>
+                                        <Table.Cell px={3} py={2}><Skeleton height="32px" width="100%" /></Table.Cell>
+                                    </Table.Row>
+                                ))
+                            ) : (
+                                userInfo?.accounts?.map((account) => (
                                     <AccountInfo
                                         key={account.name}
                                         account={account}
@@ -558,11 +519,48 @@ export function DashBoard() {
                                         isTableView={isTableView}
                                         isSelected={selectedAccounts.includes(account.name)}
                                         onToggleSelect={() => toggleSelectAccount(account.name)}
-                                        statusSuccessColor={statusSuccessColor}
                                         defaultAccount={userInfo?.default_account}
+                                        onOpenSyncConfig={(alias) => {
+                                            NiceModal.show(ConfigSyncModal, { sourceAccount: alias });
+                                        }}
                                     />
-                                );
-                            })}
+                                ))
+                            )}
+                        </Table.Body>
+                    </Table.Root>
+                </Box>
+            ) : (
+                <RadioGroup onValueChange={(e) => handleDefaultAccount(e.value || "")} value={userInfo?.default_account} flex={1} overflow={'auto'} p={1}>
+                    <Stack>
+                        <SimpleGrid gap={4} templateColumns="repeat(auto-fill, minmax(280px, 1fr))">
+                            {!userInfo ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <Card.Root key={i} bg="bg.panel" borderRadius="2xl" shadow="sm">
+                                        <Card.Header><Skeleton height="24px" width="50%" /></Card.Header>
+                                        <Card.Body><SkeletonText noOfLines={3} gap={4} /></Card.Body>
+                                        <Card.Footer><Skeleton height="32px" width="100%" /></Card.Footer>
+                                    </Card.Root>
+                                ))
+                            ) : (
+                                userInfo?.accounts?.map((account) => {
+                                    return (
+                                        <AccountInfo
+                                            key={account.name}
+                                            account={account}
+                                            onToggle={freshAccountInfo.onToggle}
+                                            increaseCount={increaseCount}
+                                            decreaseCount={decreaseCount}
+                                            updateAccountInfo={updateAccountInfo}
+                                            isTableView={isTableView}
+                                            isSelected={selectedAccounts.includes(account.name)}
+                                            onToggleSelect={() => toggleSelectAccount(account.name)}
+                                            onOpenSyncConfig={(alias) => {
+                                                NiceModal.show(ConfigSyncModal, { sourceAccount: alias });
+                                            }}
+                                        />
+                                    );
+                                })
+                            )}
                         </SimpleGrid>
                     </Stack>
                 </RadioGroup>
@@ -580,34 +578,29 @@ interface AccountInfoProps {
     isTableView?: boolean;
     isSelected?: boolean;
     onToggleSelect?: () => void;
-    statusSuccessColor?: string;
-    tableBgColor?: string;
     defaultAccount?: string;
+    onOpenSyncConfig?: (alias: string) => void;
 }
 
-function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAccountInfo, isTableView = false, isSelected = false, onToggleSelect, statusSuccessColor, tableBgColor, defaultAccount }: AccountInfoProps) {
-    const toast = useToast();
+function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAccountInfo, isTableView = false, isSelected = false, onToggleSelect, defaultAccount, onOpenSyncConfig }: AccountInfoProps) {
     const buttomLoading = useDisclosure();
     const alias = account.name;
     const deleteConfirm = useDisclosure();
-    const syncConfirm = useDisclosure();
-    const hoverBgColor = useColorModeValue('gray.100', 'gray.700');
-    const handleCleanDaily = () => {
+    
+    const handleCleanDaily = async () => {
         buttomLoading.onOpen();
         increaseCount();
-        toast({ status: 'info', title: `开始为${alias}清理日常...` });
-        postAccountAreaDaily(alias)
-            .then((res) => {
-                toast({ status: 'success', title: `${alias}清日常成功` });
-                buttomLoading.onClose();
-                decreaseCount();
-                updateAccountInfo(res);
-            })
-            .catch((err: AxiosError) => {
-                buttomLoading.onClose();
-                decreaseCount();
-                toast({ status: 'error', title: `${alias}清日常失败`, description: (err?.response?.data as string) || '网络错误' });
-            });
+        toaster.create({ type: 'info', title: `开始为${alias}清理日常...` });
+        try {
+            const res = await postAccountAreaDaily(alias);
+            toaster.create({ type: 'success', title: `${alias}清日常成功` });
+            updateAccountInfo(res);
+        } catch(err: any) {
+             toaster.create({ type: 'error', title: `${alias}清日常失败`, description: (err?.response?.data as string) || '网络错误' });
+        } finally {
+            buttomLoading.onClose();
+            decreaseCount();
+        }
     };
 
     handle.set(account.name, handleCleanDaily);
@@ -615,153 +608,187 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
     const handleDeleteAccount = () => {
         delAccount(alias)
             .then((res) => {
-                toast({ status: 'success', title: '删除账号成功', description: res });
+                toaster.create({ type: 'success', title: '删除账号成功', description: res });
                 onToggle();
             })
             .catch((err: AxiosError) => {
-                toast({ status: 'error', title: '删除账号失败', description: (err?.response?.data as string) || '网络错误' });
+                toaster.create({ type: 'error', title: '删除账号失败', description: (err?.response?.data as string) || '网络错误' });
             });
     };
 
     const handleDailyResult = () => {
-        toast({ status: 'info', title: `正在获取${alias}的日常结果...` });
+        toaster.create({ type: 'info', title: `正在获取${alias}的日常结果...` });
         getAccountDailyResultList(alias)
             .then(async (res) => {
-                toast({ status: 'success', title: '获取日常结果成功' });
+                toaster.create({ type: 'success', title: '获取日常结果成功' });
                 await NiceModal.show(ResultInfoModal, { alias: alias, title: '日常', resultInfo: res });
             })
             .catch(async (err: AxiosError) => {
-                toast({ status: 'error', title: '获取日常结果失败', description: (await (err?.response?.data as Blob).text()) || '网络错误' });
+                toaster.create({ type: 'error', title: '获取日常结果失败', description: (await (err?.response?.data as Blob).text()) || '网络错误' });
             });
     };
 
-    const handleSyncConfig = () => {
-        postAccountSyncConfig(alias)
-            .then((res) => {
-                toast({ status: 'success', title: `同步${alias}配置成功`, description: res });
-                syncConfirm.onClose();
-            })
-            .catch((err: AxiosError) => {
-                toast({ status: 'error', title: '同步配置失败', description: (err?.response?.data as string) || '网络错误' });
-            });
-    };
+    const cancelRef = React.useRef<HTMLButtonElement>(null);
 
-    const cancelRef = React.useRef<FocusableElement>(null);
+    // Status Badge Helper
+    const StatusBadge = () => {
+        let color = "red";
+        let icon = <FiUserX />;
+        let text = "未知";
+        
+        if (account.daily_clean_time.status === '成功') {
+            color = "green";
+            icon = <FiCheck />;
+            text = "完成";
+        } else if (account.daily_clean_time.status === '警告') {
+            color = "orange";
+            icon = <FiActivity />;
+            text = "警告";
+        }
+
+        return (
+             <Tag.Root colorPalette={color} variant="subtle">
+                <Tag.StartElement>{icon}</Tag.StartElement>
+                <Tag.Label>{text} {account.daily_clean_time.time}</Tag.Label>
+            </Tag.Root>
+        )
+    }
+
 
     // 表格视图渲染
     if (isTableView) {
         return (
-            <Tr
+            <Table.Row
                 key={alias}
-                bg={tableBgColor}
+                bg="bg.panel"
                 _hover={{
-                    bg: hoverBgColor,
+                    bg: "bg.muted",
                     transition: 'background-color 0.2s',
                 }}
             >
-                <Td px={3} py={2}>
-                    <Checkbox isChecked={isSelected} onChange={onToggleSelect} colorScheme="blue" />
-                </Td>
-                <Td px={0} py={2}>
-                    <Flex
-                        alignItems="center"
-                        flexWrap="wrap"
-                        sx={{
-                            '@media screen and (max-width: 768px)': {
-                                flexDirection: 'column',
-                                alignItems: 'flex-start',
-                            },
-                        }}
-                    >
-                        <Text wordBreak="break-word" fontSize="md" fontWeight="medium">
-                            {account.name}
-                        </Text>
-                        {defaultAccount === account.name && (
-                            <Tag size="sm" colorScheme="purple" mt={2} mb={2}>
-                                默认
-                            </Tag>
-                        )}
-                        {account.clan_forbid && (
-                            <Tag size="sm" colorScheme="red" mt={2} mb={2}>
-                                公会期间禁用
-                            </Tag>
-                        )}
-                    </Flex>
-                </Td>
-                <Td px={3} py={2}>
-                    <HStack>
-                        <Text fontWeight="medium" color={account.daily_clean_time.status === '成功' ? statusSuccessColor : account.daily_clean_time.status === '警告' ? 'yellow.500' : 'red.500'} fontSize="md">
-                            {account.daily_clean_time.status === '成功' ? '✓' : account.daily_clean_time.status === '警告' ? '!' : '×'}
-                            {' ' + account.daily_clean_time.time}
-                        </Text>
+                <Table.Cell px={3} py={3} width="50px">
+                    <Checkbox checked={isSelected} onCheckedChange={onToggleSelect} colorPalette="blue" />
+                </Table.Cell>
+                <Table.Cell px={0} py={3}>
+                     <HStack gap={2}>
+                        <Box w="32px" h="32px" bg="blue.subtle" color="blue.fg" borderRadius="full" display="flex" alignItems="center" justifyContent="center" fontSize="sm">
+                            {alias.charAt(0).toUpperCase()}
+                        </Box>
+                        <Stack gap={0}>
+                            <Text fontWeight="bold" fontSize="sm">{alias}</Text>
+                            <HStack gap={1}>
+                                {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
+                                {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
+                            </HStack>
+                        </Stack>
                     </HStack>
-                </Td>
-                <Td px={3} py={2}>
-                    <HStack spacing={{ base: 2, md: 4 }}>
-                        <Tooltip label="配置">
-                            <IconButton as={Link} to={`${DashBoardRoute.to || ''}${account.name}`} aria-label="AccountConfig" icon={<FiSettings />} size="sm" colorScheme="pink" display={{ base: 'flex', md: 'none' }} />
+                </Table.Cell>
+                <Table.Cell px={3} py={3}>
+                    <StatusBadge />
+                </Table.Cell>
+                <Table.Cell px={3} py={3}>
+                    <HStack gap={1}>
+                        <Tooltip content="配置">
+                            <IconButton aria-label="Settings" as={Link} // @ts-ignore
+                            to={`${DashBoardRoute.to || ''}${account.name}`} size="xs" variant="ghost" colorPalette="blue"> <FiSettings /> </IconButton>
                         </Tooltip>
-                        <Button as={Link} to={`${DashBoardRoute.to || ''}${account.name}`} size="sm" fontWeight="normal" colorScheme="pink" leftIcon={<FiSettings />} display={{ base: 'none', md: 'flex' }}>
-                            配置
-                        </Button>
 
-                        <Tooltip label="清理日常">
-                            <IconButton aria-label="DailyClean" icon={<FiTarget />} size="sm" colorScheme="orange" onClick={handleCleanDaily} isLoading={buttomLoading.isOpen} display={{ base: 'flex', md: 'none' }} />
+                        <Tooltip content="清理日常">
+                            <IconButton aria-label="Clean Daily" size="xs" variant="ghost" colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open}> <FiTarget /> </IconButton>
                         </Tooltip>
-                        <Button size="sm" fontWeight="normal" colorScheme="orange" leftIcon={<FiTarget />} onClick={handleCleanDaily} isLoading={buttomLoading.isOpen} display={{ base: 'none', md: 'flex' }}>
-                            清理
-                        </Button>
 
-                        <Tooltip label="结果">
-                            <IconButton aria-label="DailyResult" icon={<FiActivity />} size="sm" colorScheme="green" onClick={handleDailyResult} display={{ base: 'flex', md: 'none' }} />
+                        <Tooltip content="同步配置">
+                             <IconButton aria-label="Sync Config" size="xs" variant="ghost" colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open}> <FiCopy /> </IconButton>
                         </Tooltip>
-                        <Button size="sm" fontWeight="normal" colorScheme="green" leftIcon={<FiActivity />} onClick={handleDailyResult} display={{ base: 'none', md: 'flex' }}>
-                            结果
-                        </Button>
+
+                        <Tooltip content="结果">
+                             <IconButton aria-label="View Results" size="xs" variant="ghost" colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open}> <FiActivity /> </IconButton>
+                        </Tooltip>
                     </HStack>
-                </Td>
-            </Tr>
+                </Table.Cell>
+            </Table.Row>
         );
     }
 
     // 卡片视图渲染
     return (
-        <Card key={alias}>
-            <CardHeader>
-                <Flex>
-                    <Radio value={alias}> {alias} </Radio>
-                    <Spacer />
-                    <CloseButton aria-label="DeleteAccount" onClick={deleteConfirm.onOpen} />
-                    <Alert leastDestructiveRef={cancelRef} isOpen={deleteConfirm.isOpen} onClose={deleteConfirm.onClose} title="删除账号" body={`确定删除账号${alias}吗？`} onConfirm={handleDeleteAccount}>
+        <Card.Root 
+            key={alias} 
+            bg="bg.panel" 
+            shadow="sm" 
+            borderRadius="2xl"
+            borderWidth="1px"
+            borderColor="border.subtle"
+            transition="all 0.2s"
+            _hover={{ shadow: 'lg', transform: 'translateY(-2px)', borderColor: "blue.focusRing" }}
+        >
+            <Card.Header pb={2}>
+                <Flex justify="space-between" align="start">
+                    <Stack gap={1}>
+                        <HStack>
+                             <Radio value={alias} colorPalette="purple" />
+                             <Text fontWeight="bold" fontSize="lg" lineHeight="1.2">{alias}</Text>
+                             {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="subtle"><Tag.Label>禁用</Tag.Label></Tag.Root>}
+                        </HStack>
+                    </Stack>
+                    
+                     <Alert leastDestructiveRef={cancelRef} isOpen={deleteConfirm.open} onClose={deleteConfirm.onClose} title="删除账号" body={`确定删除账号${alias}吗？`} onConfirm={handleDeleteAccount}>
                         {' '}
                     </Alert>
+
+                     <IconButton 
+                        size="xs" 
+                        variant="ghost" 
+                        colorPalette="gray" 
+                        aria-label="Delete" 
+                        onClick={deleteConfirm.onOpen}
+                        _hover={{ bg: "red.subtle", color: "red.fg" }}
+                    >
+                        <CloseButton />
+                    </IconButton>
                 </Flex>
-            </CardHeader>
-            <CardBody>
-                最近清日常： {account.daily_clean_time.status == '成功' ? '✓' : account.daily_clean_time.status == '警告' ? '!' : '×'}
-                {account.daily_clean_time.time}
-                {account.clan_forbid ? <Text>公会期间禁用</Text> : ''}
-            </CardBody>
-            <CardFooter>
-                <SimpleGrid columns={2} spacing={4}>
-                    <Button colorScheme="pink" fontWeight="normal" as={Link} to={DashBoardRoute.to + alias} aria-label="AccountConfig" leftIcon={<FiSettings />} isLoading={buttomLoading.isOpen} name={alias}>
-                        配置
-                    </Button>
-                    <Button colorScheme="orange" fontWeight="normal" aria-label="DailyClean" leftIcon={<FiTarget />} isLoading={buttomLoading.isOpen} name={alias} onClick={handleCleanDaily}>
-                        清理日常
-                    </Button>
-                    <Button colorScheme="teal" fontWeight="normal" aria-label="DailySync" leftIcon={<FiCopy />} isLoading={buttomLoading.isOpen} name={alias} onClick={syncConfirm.onOpen}>
-                        同步配置
-                    </Button>
-                    <Alert leastDestructiveRef={cancelRef} isOpen={syncConfirm.isOpen} onClose={syncConfirm.onClose} title="同步配置" body={`确定将其他账号配置同步为${alias}的配置吗？`} onConfirm={handleSyncConfig}>
-                        {' '}
-                    </Alert>
-                    <Button colorScheme="green" fontWeight="normal" aria-label="DailyResult" leftIcon={<FiActivity />} isLoading={buttomLoading.isOpen} onClick={handleDailyResult} name={alias}>
-                        {' '}
-                        结果{' '}
-                    </Button>
-                </SimpleGrid>
-            </CardFooter>
-        </Card>
+            </Card.Header>
+
+            <Card.Body py={2}>
+                <Stack gap={3} mt={2}>
+                    <Box bg="bg.subtle" p={2} borderRadius="lg">
+                         <Flex justify="space-between" align="center" mb={1}>
+                            <Text fontSize="xs" color="fg.muted">上次运行</Text>
+                            <Text fontSize="xs" fontWeight="bold">{account.daily_clean_time.time}</Text>
+                        </Flex>
+                        <Flex justify="space-between" align="center">
+                            <Text fontSize="xs" color="fg.muted">状态</Text>
+                             <Tag.Root 
+                                size="sm" 
+                                colorPalette={account.daily_clean_time.status === '成功' ? "green" : account.daily_clean_time.status === '警告' ? "orange" : "red"} 
+                            >
+                                <Tag.Label>{account.daily_clean_time.status}</Tag.Label>
+                            </Tag.Root>
+                        </Flex>
+                    </Box>
+                </Stack>
+            </Card.Body>
+
+            <Card.Footer pt={2}>
+                 <HStack gap={0} w="full" justify="space-between">
+                     <Tooltip content="详细配置">
+                        <IconButton aria-label="Settings" flex="1" variant="ghost" colorPalette="blue" as={Link} // @ts-ignore
+                            to={DashBoardRoute.to + alias}> <FiSettings /> </IconButton>
+                    </Tooltip>
+                    
+                     <Tooltip content="立即清理">
+                         <IconButton aria-label="Clean Daily" flex="1" variant="ghost" colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open}> <FiTarget /> </IconButton>
+                    </Tooltip>
+
+                    <Tooltip content="同步配置">
+                         <IconButton aria-label="Sync Config" flex="1" variant="ghost" colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open}> <FiCopy /> </IconButton>
+                    </Tooltip>
+                    
+                    <Tooltip content="运行结果">
+                         <IconButton aria-label="View Result" flex="1" variant="ghost" colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open}> <FiActivity /> </IconButton>
+                    </Tooltip>
+                </HStack>
+            </Card.Footer>
+        </Card.Root>
     );
 }

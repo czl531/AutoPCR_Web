@@ -1,16 +1,16 @@
-import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import { ChakraProvider } from '@chakra-ui/react'
 import NiceModal from '@ebay/nice-modal-react';
-import theme from './theme'
-
+import { Provider } from './components/ui/provider'
+import ReactDOM from 'react-dom/client'
+import { Toaster } from './components/ui/toaster'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     // <React.StrictMode>
-    <ChakraProvider toastOptions={{ defaultOptions: { position: 'top-right', duration: 2500, isClosable: true } }} theme={theme}>
+    <Provider>
         <NiceModal.Provider>
             <App />
+            <Toaster />
         </NiceModal.Provider>
-    </ChakraProvider>
+    </Provider>
     // </React.StrictMode>,
 )

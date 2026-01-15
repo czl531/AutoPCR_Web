@@ -1,13 +1,13 @@
 import {
     Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
     ModalBody,
     ModalCloseButton,
-} from '@chakra-ui/react'
-
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+} from '../../components/ui/modal'
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
+
 import Validate from './Validate';
 
 export interface ValidateModalProps {

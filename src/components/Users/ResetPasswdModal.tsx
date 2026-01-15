@@ -1,20 +1,20 @@
 import {
     Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
     Input,
+    Stack,
+} from '@chakra-ui/react'
+import {
     Modal,
     ModalBody,
     ModalCloseButton,
     ModalContent,
     ModalHeader,
     ModalOverlay,
-    Stack,
-} from '@chakra-ui/react'
+} from '../../components/ui/modal'
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { SubmitHandler, useForm } from 'react-hook-form';
 
+import { Field } from '../../components/ui/field'
 
 interface ResetPasswdModal {
     password: string
@@ -41,19 +41,16 @@ const resetPasswdModal = NiceModal.create(() => {
                 <ModalCloseButton />
                 <ModalBody>
                     <form onSubmit={handleSubmit(handleResetPassword)}>
-                        <Stack spacing={4}>
-                            <FormControl isInvalid={!!errors.password}>
-                                <FormLabel>输入新密码</FormLabel>
+                        <Stack gap={4}>
+                            <Field invalid={!!errors.password} label="输入新密码" errorText={errors.password?.message}>
                                 <Input type='password'
                                     placeholder='5位以上'
                                     {...register("password", {
                                         required: "请输入密码",
                                         minLength: { value: 5, message: "密码长度至少 5 位" },
                                     })} />
-                                <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
-                            </FormControl>
-                            <FormControl isInvalid={!!errors.passwordRepeat}>
-                                <FormLabel>再次输入新密码</FormLabel>
+                            </Field>
+                            <Field invalid={!!errors.passwordRepeat} label="再次输入新密码" errorText={errors.passwordRepeat?.message}>
                                 <Input
                                     type="password"
                                     placeholder='与上面一致'
@@ -62,15 +59,14 @@ const resetPasswdModal = NiceModal.create(() => {
                                         validate: (value) => value === password || "两次输入的密码不一致",
                                     })}
                                 />
-                                <FormErrorMessage>{errors.passwordRepeat?.message}</FormErrorMessage>
-                            </FormControl>
+                            </Field>
                             <Button
                                 bg={'blue.400'}
                                 color={'white'}
                                 _hover={{
                                     bg: 'blue.500',
                                 }}
-                                isLoading={isSubmitting} type='submit'
+                                loading={isSubmitting} type='submit'
                             >
                                 重置密码
                             </Button>
