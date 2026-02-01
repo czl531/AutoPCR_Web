@@ -1,58 +1,54 @@
 import {
     Box,
-    HStack,
-    Text,
-    Code,
-    Stack,
     Button,
-    useColorModeValue,
-    useClipboard,
-    PinInput,
-    PinInputField
+    Clipboard,
+    Code,
+    HStack,
+    Stack,
+    Text,
 } from '@chakra-ui/react'
+
+import { PinInput } from '../../components/ui/pin-input';
 import { getLoginPin } from '@api/Login';
 import { useState } from 'react';
 
 export default function LoginWithPinComponent() {
 
-    const { onCopy, value, setValue, hasCopied } = useClipboard("");
     const [pin, setPin] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
+    const [copyValue, setCopyValue] = useState("");
 
-    const generatePin = () => {
+    const generatePin = async () => {
         setLoading(true);
-        getLoginPin().then((res) => {
-            console.log(res);
-            setValue("#login " + res);
+        try {
+            const res = await getLoginPin();
+            setCopyValue("#login " + res);
             setPin(res);
+        } finally {
             setLoading(false);
-        }).catch((err) => {
-            console.log(err);
-            setLoading(false);
-            console.log(err);
-        });
+        }
     };
 
     return (
         <Box
             rounded={'lg'}
-            bg={useColorModeValue('white', 'gray.700')}
+            bg="bg.panel"
             boxShadow={'lg'}
             p={8}>
 
-            {!pin || !value ? <Button onClick={generatePin} isLoading={loading} >生成PIN码</Button> :
-                <Stack spacing={4}>
+            {!pin || !copyValue ? <Button onClick={generatePin} loading={loading} >生成PIN码</Button> :
+                <Stack gap={4}>
                     <Text> 请于60s内在相应Q群发送</Text>
                     <Code> #login xxxx </Code>
-                    <HStack spacing={4}>
-                        <PinInput isDisabled value={pin}>
-                            <PinInputField />
-                            <PinInputField />
-                            <PinInputField />
-                            <PinInputField />
-                        </PinInput>
+                    <HStack gap={4}>
+                        <PinInput disabled value={pin ? pin.split('') : []} count={4} />
                     </HStack>
-                    <Button onClick={onCopy}>{hasCopied ? "Copied!" : "Copy"}</Button>
+                    <Clipboard.Root value={copyValue}>
+                        <Clipboard.Trigger asChild>
+                            <Button>Copy</Button>
+                        </Clipboard.Trigger>
+                        <Clipboard.Indicator>Copied!</Clipboard.Indicator>
+                    </Clipboard.Root>
                 </Stack>
             }
         </Box>

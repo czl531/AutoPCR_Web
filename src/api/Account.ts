@@ -1,6 +1,6 @@
 import { ModuleResult } from '@interfaces/ModuleResult';
 import { API } from '@api/APIUtils';
-import { AccountResponse, ValidateResponse } from '@interfaces/Account';
+import { AccountResponse, ValidateResponse, RunningStatusResponse } from '@interfaces/Account';
 import { DefaultResponse } from '@interfaces/DefaultResponse';
 import { ConfigValue, ModuleResponse } from '@interfaces/Module';
 import {AccountInfo, ResultInfo, RoleInfo, UserInfo, UserInfoResponse} from '@interfaces/UserInfo';
@@ -191,5 +191,10 @@ export async function postAccountValidate(id: string, challenge: string, validat
     validate: validate,
     userid: userid
   });
+  return response.data;
+}
+
+export async function getRunningStatus() {
+  const response = await API.get<RunningStatusResponse>(`/running_status`);
   return response.data;
 }

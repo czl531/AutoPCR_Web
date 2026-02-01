@@ -1,9 +1,5 @@
+import { Flex } from '@chakra-ui/react'
 import Validate from '@components/Account/Validate'
-import {
-    Flex,
-    useColorModeValue,
-} from '@chakra-ui/react'
-
 import {
     createFileRoute,
 } from '@tanstack/react-router'
@@ -35,7 +31,7 @@ export default function ValidateComponent() {
             height="100vh"
             align={'center'}
             justify={'center'}
-            bg={useColorModeValue('gray.50', 'gray.800')}>
+            bg="bg.canvas">
             <Validate id={id} userid={userid} gt={gt} challenge={challenge} />
         </Flex>
     )

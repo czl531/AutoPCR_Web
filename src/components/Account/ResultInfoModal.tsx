@@ -1,14 +1,15 @@
-import { ResultInfo as ResultInfoInterface } from '@interfaces/UserInfo';
 import {
     Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
     ModalBody,
     ModalCloseButton,
-} from '@chakra-ui/react'
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+} from '../../components/ui/modal'
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
+
 import { ResultInfo } from "./ResultInfo"
+import { ResultInfo as ResultInfoInterface } from '@interfaces/UserInfo';
 
 interface ModalProps {
     alias: string

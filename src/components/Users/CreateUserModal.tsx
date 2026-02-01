@@ -1,24 +1,24 @@
 import {
     Button,
-    Checkbox,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
     Input,
+    Stack,
+} from '@chakra-ui/react'
+import {
     Modal,
     ModalBody,
     ModalCloseButton,
     ModalContent,
     ModalHeader,
     ModalOverlay,
-    Stack,
-    useToast,
-} from '@chakra-ui/react'
+} from '../../components/ui/modal'
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { postUser, useUserRole } from '@/api/Account';
 
 import { AxiosError } from 'axios';
+import { Checkbox } from '../../components/ui/checkbox'
+import { Field } from '../../components/ui/field'
+import { toaster } from '../../components/ui/toaster'
 
 interface CreateUserProps {
     qq: string
@@ -31,7 +31,6 @@ interface CreateUserProps {
 const createUserModal = NiceModal.create(() => {
     const role = useUserRole();
     const modal = useModal();
-    const toast = useToast();
     const {
         handleSubmit,
         register,
@@ -39,11 +38,11 @@ const createUserModal = NiceModal.create(() => {
     } = useForm<CreateUserProps>()
     const handleCreateUser: SubmitHandler<CreateUserProps> = (values) => {
         postUser(values.qq, values).then(async (res) => {
-            toast({ status: 'success', title: '创建用户成功', description: res });
+            toaster.create({ type: 'success', title: '创建用户成功', description: res });
             modal.resolve();
             await modal.hide();
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '创建用户失败', description: err?.response?.data as string || '网络错误' });
+            toaster.create({ type: 'error', title: '创建用户失败', description: err?.response?.data as string || '网络错误' });
         });
     }
     return (
@@ -54,9 +53,8 @@ const createUserModal = NiceModal.create(() => {
                 <ModalCloseButton />
                 <ModalBody>
                     <form onSubmit={handleSubmit(handleCreateUser)}>
-                        <Stack spacing={4}>
-                            <FormControl isInvalid={!!errors.qq}>
-                                <FormLabel>QQ</FormLabel>
+                        <Stack gap={4}>
+                            <Field invalid={!!errors.qq} label="QQ" errorText={errors.qq?.message}>
                                 <Input type='text'
                                     {...register("qq", {
                                         required: "QQ 不能为空",
@@ -64,13 +62,9 @@ const createUserModal = NiceModal.create(() => {
                                     })}
                                     placeholder='5位以上'
                                 />
-                                <FormErrorMessage>
-                                    {errors.qq?.message}
-                                </FormErrorMessage>
-                            </FormControl>
+                            </Field>
 
-                            <FormControl isInvalid={!!errors.password}>
-                                <FormLabel>密码</FormLabel>
+                            <Field invalid={!!errors.password} label="密码" errorText={errors.password?.message}>
                                 <Input type='password'
                                     {...register("password", {
                                         required: "请输入密码",
@@ -78,28 +72,21 @@ const createUserModal = NiceModal.create(() => {
                                     })}
                                     placeholder='请输入密码'
                                 />
-                                <FormErrorMessage>
-                                    {errors.password?.message}
-                                </FormErrorMessage>
-                            </FormControl>
-                            <FormControl>
-                                <Checkbox {...register('clan')} >公会管理</Checkbox>
-                            </FormControl>
-                            <FormControl>
-                                <Checkbox {...register('disabled')} >禁用</Checkbox>
-                            </FormControl>
+                            </Field>
+                            <Field>
+                                <Checkbox inputProps={register('clan')} >公会管理</Checkbox>
+                            </Field>
+                            <Field>
+                                <Checkbox inputProps={register('disabled')} >禁用</Checkbox>
+                            </Field>
                             {role?.super_user &&
-                                <FormControl>
-                                    <Checkbox {...register('admin')} >管理员</Checkbox>
-                                </FormControl>
+                                <Field>
+                                    <Checkbox inputProps={register('admin')} >管理员</Checkbox>
+                                </Field>
                             }
                             <Button
-                                bg={'blue.400'}
-                                color={'white'}
-                                _hover={{
-                                    bg: 'blue.500',
-                                }}
-                                isLoading={isSubmitting} type='submit'
+                                colorPalette="brand"
+                                loading={isSubmitting} type='submit'
                             >
                                 创建
                             </Button>

@@ -1,5 +1,6 @@
-import { Table, Thead, Tbody, Tr, Th, Td, TableContainer, useColorModeValue, Box } from '@chakra-ui/react';
+import { Table, Box } from '@chakra-ui/react';
 import { useMemo } from 'react';
+import { useColorModeValue } from "@/components/ui/color-mode"
 
 interface TalentData {
     talent_levels: Record<string, number>;
@@ -118,58 +119,81 @@ export function TalentDataTable({ logContent }: TalentDataTableProps) {
 
     return (
         <Box mt={4} rounded="lg" bg={bgColor} boxShadow="lg">
-            <TableContainer>
-                <Table size="sm" variant="unstyled">
-                    <Thead position="sticky" top={0} zIndex={1} bg={headerBgColor}>
-                        <Tr>
-                            <Th outline="1px solid gray" p={1} position="sticky" left={0} bg={headerBgColor} zIndex={2}>
-                                用户名
-                            </Th>
+            <Table.Root size="sm">
+                <Table.Header position="sticky" top={0} zIndex={1} bg={headerBgColor}>
+                    <Table.Row>
+                        <Table.ColumnHeader 
+                            outline="1px solid gray" 
+                            p={1} 
+                            position="sticky" 
+                            left={0} 
+                            bg={headerBgColor} 
+                            zIndex={2}
+                        >
+                            用户名
+                        </Table.ColumnHeader>
+                        {infoColumns.includes('数据时间') && (
+                            <Table.ColumnHeader border="1px solid gray" p={1}>
+                                数据时间
+                            </Table.ColumnHeader>
+                        )}
+                        {attributeMap.map(attr => (
+                            <Table.ColumnHeader 
+                                key={attr.key} 
+                                textAlign="center" 
+                                fontSize="xs" 
+                                border="1px solid gray" 
+                                p={1}
+                            >
+                                {attr.name}
+                            </Table.ColumnHeader>
+                        ))}
+                        <Table.ColumnHeader border="1px solid gray" p={1}>
+                            属性技能
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader border="1px solid gray" p={1}>
+                            大师技能
+                        </Table.ColumnHeader>
+                    </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                    {userTalentData.map((user) => (
+                        <Table.Row key={user.user_name}>
+                            <Table.Cell 
+                                outline="1px solid gray" 
+                                p={1} 
+                                position="sticky" 
+                                left={0} 
+                                bg={headerBgColor} 
+                                zIndex={2}
+                            >
+                                {user.user_name}
+                            </Table.Cell>
                             {infoColumns.includes('数据时间') && (
-                                <Th border="1px solid gray" p={1}>
-                                    数据时间
-                                </Th>
+                                <Table.Cell border="1px solid gray" p={1}>
+                                    {user.data_time}
+                                </Table.Cell>
                             )}
                             {attributeMap.map(attr => (
-                                <Th key={attr.key} textAlign="center" fontSize="xs" border="1px solid gray" p={1}>
-                                    {attr.name}
-                                </Th>
+                                <Table.Cell 
+                                    key={attr.key} 
+                                    textAlign="center" 
+                                    border="1px solid gray" 
+                                    p={1}
+                                >
+                                    {user.talent_data.talent_levels[attr.key]}
+                                </Table.Cell>
                             ))}
-                            <Th border="1px solid gray" p={1}>
-                                属性技能
-                            </Th>
-                            <Th border="1px solid gray" p={1}>
-                                大师技能
-                            </Th>
-                        </Tr>
-                    </Thead>
-                    <Tbody>
-                        {userTalentData.map((user) => (
-                            <Tr key={user.user_name}>
-                                <Td outline="1px solid gray" p={1} position="sticky" left={0} bg={headerBgColor} zIndex={2}>
-                                    {user.user_name}
-                                </Td>
-                                {infoColumns.includes('数据时间') && (
-                                    <Td border="1px solid gray" p={1}>
-                                        {user.data_time}
-                                    </Td>
-                                )}
-                                {attributeMap.map(attr => (
-                                    <Td key={attr.key} textAlign="center" border="1px solid gray" p={1}>
-                                        {user.talent_data.talent_levels[attr.key]}
-                                    </Td>
-                                ))}
-                                <Td border="1px solid gray" p={1}>
-                                    {user.talent_data.skill_tree}
-                                </Td>
-                                <Td border="1px solid gray" p={1}>
-                                    {user.talent_data.team_skill}
-                                </Td>
-                            </Tr>
-                        ))}
-                    </Tbody>
-                </Table>
-            </TableContainer>
+                            <Table.Cell border="1px solid gray" p={1}>
+                                {user.talent_data.skill_tree}
+                            </Table.Cell>
+                            <Table.Cell border="1px solid gray" p={1}>
+                                {user.talent_data.team_skill}
+                            </Table.Cell>
+                        </Table.Row>
+                    ))}
+                </Table.Body>
+            </Table.Root>
         </Box>
     );
 }

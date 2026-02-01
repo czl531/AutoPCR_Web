@@ -1,8 +1,9 @@
-import { getAccount } from '@/api/Account'
-import { AccountResponse } from '@/interfaces/Account'
-import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
+
+import { AccountResponse } from '@/interfaces/Account'
 import Area from "./Area"
+import { Tabs } from '@chakra-ui/react'
+import { getAccount } from '@/api/Account'
 
 export default function Account(alias: string) {
 
@@ -20,26 +21,24 @@ export default function Account(alias: string) {
 
 
     return (
-        <Tabs>
-            <TabList>
-                <Tab isDisabled>{account?.alias}</Tab>
+        <Tabs.Root lazyMount variant="enclosed" defaultValue="0">
+            <Tabs.List>
+                <Tabs.Trigger value="0" disabled>{account?.alias}</Tabs.Trigger>
                 {
-                    account?.area.map((area) => {
-                        return <Tab key={area.name} >{area.name}</Tab>
+                    account?.area.map((area, index) => {
+                        return <Tabs.Trigger key={area.name} value={String(index + 1)}>{area.name}</Tabs.Trigger>
                     })
                 }
-            </TabList>
+            </Tabs.List>
 
-            <TabPanels>
-                <TabPanel>
-                    你怎么做到的？
-                </TabPanel>
-                {
-                    account?.area.map((area) => {
-                        return <TabPanel key={area.key}> <Area alias={alias} keys={area.key} /> </TabPanel>
-                    })
-                }
-            </TabPanels>
-        </Tabs>
+            <Tabs.Content value="0">
+                你怎么做到的？
+            </Tabs.Content>
+            {
+                account?.area.map((area, index) => {
+                    return <Tabs.Content key={area.key} value={String(index + 1)}> <Area alias={alias} keys={area.key} /> </Tabs.Content>
+                })
+            }
+        </Tabs.Root>
     )
 }

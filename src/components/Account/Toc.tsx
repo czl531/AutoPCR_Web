@@ -1,10 +1,10 @@
 import {
     Box,
-    Flex,
-    useColorModeValue,
     BoxProps,
+    Flex,
     FlexProps,
 } from '@chakra-ui/react'
+
 import { TocItem } from './Area'
 
 interface SidebarProps extends BoxProps {
@@ -15,9 +15,9 @@ export default function Toc({ tocList, ...rest }: SidebarProps) {
 
     return (
         <Box
-            bg={useColorModeValue('gray.50', 'gray.900')}
+            bg="bg.panel"
             borderRight="1px"
-            borderRightColor={useColorModeValue('gray.200', 'gray.700')}
+            borderColor="border.subtle"
             overflow="scroll"
             {...rest}>
             {
@@ -40,10 +40,11 @@ const NavItem = ({ module_id, children, ...rest }: NavItemProps) => {
     return (
         <Box
             as="a"
+            // @ts-ignore
             href={`#${module_id}`}
             style={{ textDecoration: 'none' }}
             _focus={{ boxShadow: 'none' }}
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+            onClick={(e: React.MouseEvent<HTMLElement>) => {
                 e.preventDefault();
                 document.querySelector(`#${module_id}`)?.scrollIntoView({
                     behavior: "smooth"
@@ -57,8 +58,8 @@ const NavItem = ({ module_id, children, ...rest }: NavItemProps) => {
                 role="group"
                 cursor="pointer"
                 _hover={{
-                    bg: 'cyan.400',
-                    color: 'white',
+                    bg: 'brand.500',
+                    color: 'black',
                 }}
                 {...rest}>
                 {children}

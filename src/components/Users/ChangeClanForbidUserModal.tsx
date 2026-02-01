@@ -1,21 +1,23 @@
 import {
     Button,
-    FormControl,
+    Stack,
+    Textarea,
+} from '@chakra-ui/react'
+import {
     Modal,
     ModalBody,
     ModalCloseButton,
     ModalContent,
     ModalHeader,
     ModalOverlay,
-    Stack,
-    Textarea,
-    useToast,
-} from '@chakra-ui/react'
+} from '../../components/ui/modal'
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { putClanForbid } from '@/api/Account';
 
 import { AxiosError } from 'axios';
+import { Field } from '../../components/ui/field'
+import { putClanForbid } from '@/api/Account';
+import { toaster } from '../../components/ui/toaster'
 
 interface ClanForbid {
     accs: string;
@@ -23,7 +25,6 @@ interface ClanForbid {
 
 const clanForbid = NiceModal.create(({ accs }: { accs: string }) => {
     const modal = useModal();
-    const toast = useToast();
     const {
         handleSubmit,
         register,
@@ -31,11 +32,11 @@ const clanForbid = NiceModal.create(({ accs }: { accs: string }) => {
     } = useForm<ClanForbid>()
     const handleCreateUser: SubmitHandler<ClanForbid> = (values) => {
         putClanForbid(values.accs).then(async (res) => {
-            toast({ status: 'success', title: '创建会战禁用成功', description: res });
+            toaster.create({ type: 'success', title: '创建会战禁用成功', description: res });
             modal.resolve();
             await modal.hide();
         }).catch((err: AxiosError) => {
-            toast({ status: 'error', title: '创建会战禁用失败', description: err?.response?.data as string || '网络错误' });
+            toaster.create({ type: 'error', title: '创建会战禁用失败', description: err?.response?.data as string || '网络错误' });
         });
     }
     return (
@@ -46,22 +47,18 @@ const clanForbid = NiceModal.create(({ accs }: { accs: string }) => {
                 <ModalCloseButton />
                 <ModalBody>
                     <form onSubmit={handleSubmit(handleCreateUser)}>
-                        <Stack spacing={4}>
-                            <FormControl id="accs" isRequired>
+                        <Stack gap={4}>
+                            <Field required>
                                 <Textarea {...register('accs')}
                                     placeholder="禁用账号（是游戏账号噢）"
                                     h="50vh"
                                     defaultValue={accs}
                                     size="md"
                                 />
-                            </FormControl>
+                            </Field>
                             <Button
-                                bg={'blue.400'}
-                                color={'white'}
-                                _hover={{
-                                    bg: 'blue.500',
-                                }}
-                                isLoading={isSubmitting} type='submit'
+                                colorPalette="brand"
+                                loading={isSubmitting} type='submit'
                             >
                                 提交
                             </Button>

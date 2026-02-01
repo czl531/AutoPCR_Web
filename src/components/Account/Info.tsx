@@ -1,40 +1,42 @@
-import { putAccount } from '@/api/Account';
-import { AccountResponse } from '@/interfaces/Account';
 import {
     Button,
-    Checkbox,
-    // CheckboxGroup,
-    FormControl,
-    FormLabel,
+    Card,
+    Flex,
     Heading,
     Input,
-    Select,
+    NativeSelect,
+    SimpleGrid,
     Stack,
-    useColorModeValue,
-    useDisclosure,
-    useToast,
-    Flex,
-    Box,
     Text,
     VStack,
-    Spacer,
+    useDisclosure,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
+import { useEffect, useState } from 'react';
+
+import { AccountResponse } from '@/interfaces/Account';
 import { AxiosError } from 'axios';
-import { useState, useEffect } from 'react';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Field } from '../../components/ui/field';
+import { putAccount } from '@/api/Account';
+import { toaster } from '../../components/ui/toaster';
 
 interface InfoProps {
     accountInfo: AccountResponse;
     onSaveSuccess?: () => void; // 添加回调函数属性
 }
 
-export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
-    const toast = useToast();
+const fadeEntry = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
+export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
     const [username, setUsername] = useState<string>(accountInfo?.username);
     const [password, setPassword] = useState<string>(accountInfo?.password);
     const [channel, setChannel] = useState<string>(accountInfo?.channel);
     const [batchAccounts, setBatchAccounts] = useState<(string | number)[]>(accountInfo?.batch_accounts || []);
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { open: isOpen, onOpen, onClose } = useDisclosure();
 
     // 全选状态
     const [allChecked, setAllChecked] = useState<boolean>(false);
@@ -57,23 +59,22 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
         onOpen();
         putAccount(accountInfo?.alias, username, password, channel, batchAccounts)
             .then((res) => {
-                toast({ title: '保存成功', description: res, status: 'success' });
+                toaster.create({ title: '保存成功', description: res, type: 'success' });
                 // 调用回调函数通知父组件更新数据
                 if (onSaveSuccess) {
                     onSaveSuccess();
                 }
             })
             .catch((err: AxiosError) => {
-                toast({ title: '保存失败', description: (err.response?.data as string) || '网络错误', status: 'error' });
+                toaster.create({ title: '保存失败', description: (err.response?.data as string) || '网络错误', type: 'error' });
             })
             .finally(() => {
                 onClose();
             });
     };
 
-    // 处理全选/取消全选
-    const handleAllChecked = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const isChecked = e.target.checked;
+    const onAllCheckedChange = (details: { checked: boolean | "indeterminate" }) => {
+        const isChecked = !!details.checked;
         setAllChecked(isChecked);
 
         if (isChecked) {
@@ -85,7 +86,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
             setBatchAccounts([]);
             setUnselectedAccounts(accountInfo?.all_accounts ? [...accountInfo.all_accounts] : []);
         }
-    };
+    }
 
     // 处理单个账号选择
     const handleAccountToggle = (account: string | number) => {
@@ -99,8 +100,6 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
             setUnselectedAccounts(unselectedAccounts.filter((item) => item !== account));
         }
     };
-    const unselectedBoxBg = useColorModeValue('gray.50', 'gray.800');
-    const selectedBoxBg = useColorModeValue('blue.50', 'blue.900');
 
     // 当选择变化时，更新全选状态
     useEffect(() => {
@@ -110,105 +109,162 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
     }, [batchAccounts, accountInfo]);
 
     return (
-        <Stack spacing={4} w={'full'} bg={useColorModeValue('white', 'gray.700')} rounded={'xl'} boxShadow={'lg'} p={6} my={12}>
-            <Heading lineHeight={1.1} fontSize={{ base: '2xl', sm: '3xl' }}>
-                {accountInfo?.alias}
-            </Heading>
+        <Stack
+            gap={6}
+            w={'full'}
+            bg="bg.panel"
+            rounded={'2xl'}
+            borderWidth="1px"
+            borderColor="border.muted"
+            p={{ base: 6, md: 8 }}
+            my={4}
+            animation={`${fadeEntry} 0.4s ease-out`}
+            boxShadow="sm"
+        >
+             <Flex justify="space-between" align="center" mb={2}>
+                <Heading size="lg" fontWeight="bold" letterSpacing="tight">
+                    {accountInfo?.alias === 'BATCH_RUNNER' ? '批量运行配置' : accountInfo?.alias}
+                </Heading>
+                {accountInfo?.alias !== 'BATCH_RUNNER' && (
+                    <Text fontSize="sm" color="fg.muted">
+                        基础信息配置
+                    </Text>
+                )}
+            </Flex>
+
             <form onSubmit={handleSave}>
-                <Stack spacing={6}>
-                    {accountInfo?.alias != 'BATCH_RUNNER' && (
-                        <FormControl id="username" isRequired>
-                            <FormLabel>账号</FormLabel>
-                            <Input placeholder="手机号或账号" _placeholder={{ color: 'gray.500' }} type="text" defaultValue={accountInfo?.username || ''} onChange={(e) => setUsername(e.target.value)} />
-                        </FormControl>
+                <Stack gap={6}>
+                    {accountInfo?.alias !== 'BATCH_RUNNER' && (
+                        <>
+                            <Field label="账号" required>
+                                <Input
+                                    size="lg"
+                                    placeholder="请输入手机号或账号"
+                                    type="text"
+                                    variant="subtle"
+                                    defaultValue={accountInfo?.username || ''}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            </Field>
+                            <Field label="密码" required>
+                                <Input
+                                    size="lg"
+                                    placeholder="请输入密码"
+                                    type="password"
+                                    variant="subtle"
+                                    defaultValue={accountInfo?.password || ''}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </Field>
+                            <Field label="平台" required>
+                                <NativeSelect.Root size="lg" variant="subtle">
+                                    <NativeSelect.Field
+                                        defaultValue={accountInfo?.channel}
+                                        onChange={(e) => setChannel(e.target.value)}
+                                    >
+                                        {accountInfo?.channel_option.map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </NativeSelect.Field>
+                                </NativeSelect.Root>
+                            </Field>
+                            
+                            <Button
+                                size="lg"
+                                colorPalette="blue"
+                                loading={isOpen}
+                                type="submit"
+                                rounded="xl"
+                                fontWeight="semibold"
+                                mt={2}
+                            >
+                                保存配置
+                            </Button>
+                        </>
                     )}
-                    {accountInfo?.alias != 'BATCH_RUNNER' && (
-                        <FormControl id="password" isRequired>
-                            <FormLabel>Password</FormLabel>
-                            <Input placeholder="密码" _placeholder={{ color: 'gray.500' }} type="password" defaultValue={accountInfo?.password || ''} onChange={(e) => setPassword(e.target.value)} />
-                        </FormControl>
-                    )}
-                    {accountInfo?.alias != 'BATCH_RUNNER' && (
-                        <FormControl id="channel" isRequired>
-                            <FormLabel>平台</FormLabel>
-                            <Select defaultValue={accountInfo?.channel} onChange={(e) => setChannel(e.target.value)}>
-                                {accountInfo?.channel_option.map((option) => {
-                                    return (
-                                        <option key={option} value={option}>
-                                            {option}
-                                        </option>
-                                    );
-                                })}
-                            </Select>
-                        </FormControl>
-                    )}
-                    {accountInfo?.alias != 'BATCH_RUNNER' &&
-                        <Button
-                            bg={'blue.400'}
-                            color={'white'}
-                            w="full"
-                            isLoading={isOpen}
-                            type="submit"
-                            _hover={{
-                                bg: 'blue.500',
-                            }}
-                        >
-                            保存
-                        </Button>
-                    }
-                    {accountInfo?.alias == 'BATCH_RUNNER' && (
-                        <FormControl id="batch_account">
-                            <Flex>
-                                <FormLabel>批量账号选择</FormLabel>
-                                <Spacer />
+
+                    {accountInfo?.alias === 'BATCH_RUNNER' && (
+                        <Stack gap={5}>
+                             <Flex justify="space-between" align="center" bg="bg.subtle" p={3} rounded="xl">
+                                <Checkbox 
+                                    checked={allChecked} 
+                                    onCheckedChange={onAllCheckedChange} 
+                                    fontWeight="medium"
+                                >
+                                    全选所有账号
+                                </Checkbox>
                                 <Button
-                                    bg={'blue.400'}
-                                    color={'white'}
-                                    isLoading={isOpen}
+                                    size="sm"
+                                    colorPalette="blue"
+                                    loading={isOpen}
                                     type="submit"
-                                    _hover={{
-                                        bg: 'blue.500',
-                                    }}
+                                    rounded="lg"
+                                    px={6}
                                 >
                                     保存
                                 </Button>
                             </Flex>
-                            <Checkbox isChecked={allChecked} onChange={handleAllChecked} mb={4}>
-                                全选
-                            </Checkbox>
 
-                            <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
+                            <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                                 {/* 左侧：未选择的账号 */}
-                                <Box flex="1" borderWidth="1px" borderRadius="md" p={3} bg={unselectedBoxBg}>
-                                    <Text fontWeight="bold" mb={2}>
-                                        未选择的账号
-                                    </Text>
-                                    <VStack align="start" spacing={2}>
-                                        {unselectedAccounts.map((account) => (
-                                            <Checkbox key={`unselected-${account}`} isChecked={false} onChange={() => handleAccountToggle(account)}>
-                                                {account}
-                                            </Checkbox>
-                                        ))}
-                                    </VStack>
-                                </Box>
+                                <Card.Root variant="subtle" size="sm">
+                                    <Card.Header pb={2}>
+                                        <Text fontWeight="semibold" color="fg.muted">未选择的账号 ({unselectedAccounts.length})</Text>
+                                    </Card.Header>
+                                    <Card.Body pt={0} maxH="400px" overflowY="auto">
+                                        <VStack align="start" gap={1}>
+                                            {unselectedAccounts.map((account) => (
+                                                <Checkbox
+                                                    key={`unselected-${account}`}
+                                                    checked={false}
+                                                    onCheckedChange={() => handleAccountToggle(account)}
+                                                    w="full"
+                                                    p={2}
+                                                    rounded="md"
+                                                    _hover={{ bg: 'bg.muted' }}
+                                                >
+                                                    {account}
+                                                </Checkbox>
+                                            ))}
+                                            {unselectedAccounts.length === 0 && (
+                                                <Text color="fg.muted" fontSize="sm" py={2}>无</Text>
+                                            )}
+                                        </VStack>
+                                    </Card.Body>
+                                </Card.Root>
 
                                 {/* 右侧：已选择的账号 */}
-                                <Box flex="1" borderWidth="1px" borderRadius="md" p={3} bg={selectedBoxBg}>
-                                    <Text fontWeight="bold" mb={2}>
-                                        已选择的账号
-                                    </Text>
-                                    <VStack align="start" spacing={2}>
-                                        {batchAccounts.map((account) => (
-                                            <Checkbox key={`selected-${account}`} isChecked={true} onChange={() => handleAccountToggle(account)}>
-                                                {account}
-                                            </Checkbox>
-                                        ))}
-                                    </VStack>
-                                </Box>
-                            </Flex>
-                        </FormControl>
+                                <Card.Root variant="outline" borderColor="blue.solid/20" size="sm">
+                                    <Card.Header pb={2} bg="blue.subtle/20" borderTopRadius="md">
+                                        <Text fontWeight="semibold" color="blue.fg">已选择的账号 ({batchAccounts.length})</Text>
+                                    </Card.Header>
+                                    <Card.Body pt={2} maxH="400px" overflowY="auto">
+                                        <VStack align="start" gap={1}>
+                                            {batchAccounts.map((account) => (
+                                                <Checkbox
+                                                    key={`selected-${account}`}
+                                                    checked={true}
+                                                    onCheckedChange={() => handleAccountToggle(account)}
+                                                    colorPalette="blue"
+                                                    w="full"
+                                                    p={2}
+                                                    rounded="md"
+                                                    _hover={{ bg: 'blue.subtle/10' }}
+                                                >
+                                                    {account}
+                                                </Checkbox>
+                                            ))}
+                                             {batchAccounts.length === 0 && (
+                                                <Text color="fg.muted" fontSize="sm" py={2}>请选择账号</Text>
+                                            )}
+                                        </VStack>
+                                    </Card.Body>
+                                </Card.Root>
+                            </SimpleGrid>
+                        </Stack>
                     )}
-
                 </Stack>
             </form>
         </Stack>

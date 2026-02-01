@@ -1,11 +1,5 @@
 import {
     Table,
-    Thead,
-    Tbody,
-    Tr,
-    Th,
-    TableContainer,
-    Td,
 } from '@chakra-ui/react';
 import { MemoryItem } from './MemoryUtils';
 
@@ -18,31 +12,35 @@ interface MemoryTableProps {
 
 export function MemoryTable({ data }: MemoryTableProps) {
     return (
-        <TableContainer rounded={'lg'} boxShadow={'lg'}>
-            <Table size="sm" variant="striped" width="100%">
-                <Thead>
-                    <Tr>
-                        <Th width="10%">角色名</Th>
+        <Table.ScrollArea rounded={'lg'} boxShadow={'lg'}>
+            <Table.Root size="sm" width="100%">
+                <Table.Header>
+                    <Table.Row>
+                        <Table.Cell width="10%">角色名</Table.Cell>
                         {data.accountNames.map((accountName, index) => (
-                            <Th key={index} width={`${80 / data.accountNames.length}%`}>
+                            <Table.Cell key={index} width={`${80 / data.accountNames.length}%`}>
                                 {accountName || ''}
-                            </Th>
+                            </Table.Cell>
                         ))}
-                    </Tr>
-                </Thead>
-                <Tbody>
+                    </Table.Row>
+                </Table.Header>
+                <Table.Body>
                     {data.items.map((item, index) => (
-                        <Tr key={index}>
-                            <Td width="10%">{item.characterName}</Td>
+                        <Table.Row key={index}>
+                            <Table.Cell width="10%">{item.characterName}</Table.Cell>
                             {item.accounts.map((account, accIndex) => (
-                                <Td key={accIndex} color={account.isDeficit ? 'red.500' : 'green.500'} width={`${80 / data.accountNames.length}%`}>
+                                <Table.Cell 
+                                    key={accIndex} 
+                                    color={account.isDeficit ? 'red.500' : 'green.500'} 
+                                    width={`${80 / data.accountNames.length}%`}
+                                >
                                     {account.status}
-                                </Td>
+                                </Table.Cell>
                             ))}
-                        </Tr>
+                        </Table.Row>
                     ))}
-                </Tbody>
-            </Table>
-        </TableContainer>
+                </Table.Body>
+            </Table.Root>
+        </Table.ScrollArea>
     );
 }

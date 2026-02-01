@@ -1,38 +1,35 @@
 import {
     Box,
+    Button,
     Flex,
+    FlexProps,
     HStack,
     Icon,
-    useColorModeValue,
-    FlexProps,
-    // Button,
-    // Stack,
-    useColorMode,
     Image,
-    createStandaloneToast,
-    useTheme,
     Text,
     useBreakpointValue,
-    IconButton,
-    Tooltip,
 } from '@chakra-ui/react'
 import {
+    FiCompass,
     FiHome,
     FiUsers,
-    FiCompass,
 } from 'react-icons/fi'
-import { IconType } from 'react-icons'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
-import { postLogout } from '@api/Login'
-import { Route as LoginRoute } from "@routes/daily/login";
+import { LuMoon, LuSun } from 'react-icons/lu'
+import { useColorMode } from '../ui/color-mode'
+
+import { IconType } from 'react-icons'
 import { Route as InfoRoute } from "@routes/daily/_sidebar/account/index";
+import { Route as LoginRoute } from "@routes/daily/login";
+import { Tooltip } from '../../components/ui/tooltip'
 import { Route as UsersRoute } from "@routes/daily/_sidebar/user/index";
-import { MoonIcon, SunIcon } from '@chakra-ui/icons'
-import autopcr from "@/assets/autopcr.svg"
-import { AxiosError } from 'axios'
-import {useEffect} from 'react'
 import { ValidateResponse } from '@/interfaces/Account'
+import autopcr from "@/assets/autopcr.svg"
+import { postLogout } from '@api/Login'
+import { toaster } from '../../components/ui/toaster'
+import {useEffect} from 'react'
 import {useUserRole} from "@api/Account.ts";
+import RunningStatus from '../Account/RunningStatus';
 
 interface NavItemProps extends FlexProps {
     icon?: IconType
@@ -40,49 +37,67 @@ interface NavItemProps extends FlexProps {
     href?: string
 }
 
-const NavItem = ({ icon, children, href, ...rest }: NavItemProps) => {
+const NavItem = ({ icon, children, href, onClick, ...rest }: NavItemProps) => {
     const isSmallScreen = useBreakpointValue({ base: true, md: false });
 
-    return (
-        <Box
-            style={{ textDecoration: 'none' }}
-            _focus={{ boxShadow: 'none' }}>
-            <Link to={href}>
-                <Tooltip label={isSmallScreen ? children : undefined}>
-                    <Flex
-                        align="center"
-                        p={isSmallScreen ? "2" : "4"}
-                        mx={isSmallScreen ? "1" : "4"}
-                        borderRadius="lg"
-                        role="group"
-                        cursor="pointer"
-                        _hover={{
-                            bg: 'cyan.400',
-                            color: 'white',
-                        }}
-                        {...rest}>
-                        {icon && (
-                            <Icon
-                                mr={isSmallScreen ? "0" : "4"}
-                                fontSize="16"
-                                _groupHover={{
-                                    color: 'white',
-                                }}
-                                as={icon}
-                            />
-                        )}
-                        {!isSmallScreen && children}
-                    </Flex>
-                </Tooltip>
+    const content = (
+        <Flex
+            align="center"
+            py={2}
+            px={3}
+            borderRadius="full"
+            role="group"
+            cursor="pointer"
+            transition="all 0.2s"
+            color="fg.muted"
+            _hover={{
+                bg: 'bg.subtle',
+                color: 'fg',
+                transform: 'translateY(-1px)'
+            }}
+            onClick={onClick}
+            {...rest}>
+            {icon && (
+                <Icon
+                    mr={isSmallScreen ? "0" : "2"}
+                    fontSize="18"
+                    as={icon}
+                />
+            )}
+            {!isSmallScreen && <Text fontSize="sm" fontWeight="medium">{children}</Text>}
+        </Flex>
+    );
+
+    if (href) {
+        return (
+            <Link 
+                to={href} 
+                activeProps={{ 
+                    style: { 
+                        fontWeight: "bold",
+                        backgroundColor: "var(--chakra-colors-sidebar-active-bg)",
+                        color: "var(--chakra-colors-sidebar-active-fg)",
+                    } 
+                }}
+                style={{ textDecoration: 'none' }}
+            >
+                {/* Need to override color for active state manually as activeProps style applies to the 'a' tag */}
+                 <Tooltip content={isSmallScreen ? children : undefined}>
+                    {content}
+                 </Tooltip>
             </Link>
-        </Box>
+        )
+    }
+
+    return (
+        <Tooltip content={isSmallScreen ? children : undefined}>
+            {content}
+        </Tooltip>
     )
 }
 
 export default function Nav() {
     const { colorMode, toggleColorMode } = useColorMode()
-    const theme = useTheme();
-    const { toast } = createStandaloneToast({ theme });
     const role = useUserRole();
     const isSmallScreen = useBreakpointValue({ base: true, md: false });
 
@@ -107,25 +122,26 @@ export default function Nav() {
         };
     }, []);
 
-    const handleLogout = () => {
-        postLogout().then(async (res) => {
-            toast({ title: "登出成功", description: res, status: "success" });
+    const handleLogout = async () => {
+        try {
+            const res = await postLogout();
+            toaster.create({ title: "登出成功", description: res, type: "success" });
             await navigate({ to: LoginRoute.to });
-        }).catch((err: AxiosError) => {
-            toast({ title: "登出失败", description: err.response?.data as string, status: "error" });
-        })
+        } catch {
+            // Error is handled globally
+        }
     }
 
     return (
-        <Flex flexDirection={'column'} height={'100vh'}>
-            <Box top={0} left={0} right={0} zIndex={10} bg={useColorModeValue('gray.200', 'gray.900')} px={2}>
-                <Flex h={16} alignItems={'center'} justifyContent={'space-between'}>
+        <Flex flexDirection={'column'} height={'100vh'} bg="bg.canvas">
+            <Box top={0} left={0} right={0} zIndex={20} bg="transparent" px={4} py={0}>
+                <Flex h={14} alignItems={'center'} justifyContent={'space-between'}>
                     <Box>
                         <Link to={InfoRoute.to}>
-                            <Image src={autopcr} alt="autopcr" style={{ width: "40px", height: "40px" }} />
+                            <Image src={autopcr} alt="autopcr" h="32px" w="auto" objectFit="contain" />
                         </Link>
                     </Box>
-                    <HStack as={'nav'} spacing={isSmallScreen ? 1 : 4}>
+                    <HStack as={'nav'} gap={isSmallScreen ? 1 : 4}>
                         <NavItem key="dashboard" href={InfoRoute.to} icon={FiHome} >
                             一览
                         </NavItem>
@@ -136,24 +152,29 @@ export default function Nav() {
                             登出
                         </NavItem>
                     </HStack>
-                    <Flex alignItems={'center'}>
-                        <IconButton
+                    <Flex alignItems={'center'} gap={2}>
+                        <RunningStatus />
+                        <Button
                             aria-label="Toggle color mode"
-                            icon={colorMode === 'light' ? <SunIcon /> : <MoonIcon />}
                             onClick={toggleColorMode}
                             size={isSmallScreen ? "sm" : "md"}
-                        />
+                            px={0}
+                            variant="ghost"
+                            colorPalette="brand"
+                        >
+                            {colorMode === 'light' ? <LuSun /> : <LuMoon />}
+                        </Button>
                     </Flex>
                 </Flex>
             </Box>
 
-            <Flex p={4} flex={1} overflow={'auto'} flexDirection={'column'}>
+            <Flex p={4} flex={1} overflow={'auto'} flexDirection={'column'} zIndex={1}>
                 <Outlet />
             </Flex>
 
-            <Box position="fixed" bottom={0} left={0} right={0} zIndex={10} bg={useColorModeValue('gray.200', 'gray.900')} px={4} textAlign='right'>
-                <Text fontSize="sm" color="gray.500">
-                    Powered by <a href="https://github.com/cc004/autopcr">AutoPCR</a> <a href="https://github.com/Lanly109/AutoPCR_Web">AutoPCR_Web</a>：{APP_VERSION}
+            <Box py={0} pb={2} bg="transparent" px={4} textAlign='right'>
+                <Text fontSize="xs" color="fg.muted">
+                    Powered by <a href="https://github.com/cc004/autopcr" target="_blank" rel="noreferrer">AutoPCR</a> & <a href="https://github.com/Lanly109/AutoPCR_Web" target="_blank" rel="noreferrer">AutoPCR_Web</a> · {APP_VERSION}
                 </Text>
             </Box>
         </Flex>

@@ -1,9 +1,18 @@
+import { Box, Button, Flex, Input, Text } from '@chakra-ui/react';
 import { Candidate, ConfigValue } from '@interfaces/Module';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, Input, Flex, Box, Text, IconButton, useColorModeValue } from '@chakra-ui/react';
-import { useRef, useState } from 'react';
+import {
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+} from '../../components/ui/modal';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
-import { CloseIcon } from '@chakra-ui/icons';
+import { useRef, useState } from 'react';
 
+import { IoClose } from 'react-icons/io5';
 
 interface MultiSelectModalProps {
     candidates: Candidate[];
@@ -13,8 +22,6 @@ interface MultiSelectModalProps {
 const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectModalProps) => {
     const modal = useModal();
 
-    const hoverBg = useColorModeValue('blue.100', 'blue.700');
-    const innerHoverBg = useColorModeValue('red.100', 'red.700');
     const [selectedUnits, setSelectedUnits] = useState<ConfigValue[]>(value);
     const [availableUnits, setAvailableUnits] = useState<Candidate[]>(candidates.filter((u) => !value.includes(u.value)));
     const [searchAllText, setSearchAllText] = useState('');
@@ -47,11 +54,12 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
 
     const handleSave = () => {
         modal.resolve(selectedUnits);
-        modal.remove();
+        modal.hide();
     };
 
     const handleClose = () => {
-        modal.remove();
+        modal.resolve(undefined);
+        modal.hide();
     };
 
     const moveUnit = (fromIndex: number, toIndex: number) => {
@@ -113,10 +121,10 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                         <Box flex={1}>
                             <Text mb={2}>未选择 ({availableUnits.length})</Text>
                             <Input placeholder="搜索" mb={2} value={searchAllText} onChange={(e) => setSearchAllText(e.target.value)} />
-                            <Box maxH="55vh" overflowY="auto" p={2} borderRadius="md">
+                            <Box maxH="55vh" overflowY="auto" p={2} borderRadius="md" borderWidth="1px" borderColor="border" bg="bg.panel">
                                 <Button
                                     size="sm"
-                                    colorScheme="green"
+                                    colorPalette="green"
                                     onClick={() => {
                                         const allValues = filteredAvailable.map(u => u.value);
                                         setSelectedUnits([...new Set([...selectedUnits, ...allValues])]);
@@ -126,7 +134,7 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                                     全选
                                 </Button>
                                 {filteredAvailable.map((u, id) => (
-                                    <Box key={id} p={1} cursor="pointer" _hover={{ bg: hoverBg }} onClick={() => handleAdd(u.value)}>
+                                    <Box key={id} p={1} cursor="pointer" _hover={{ bg: "bg.subtle" }} onClick={() => handleAdd(u.value)}>
                                         {u.nickname ? u.nickname : u.display}
                                     </Box>
                                 ))}
@@ -136,12 +144,12 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                         <Box flex={1}>
                             <Text mb={2}>已选择 ({selectedUnits.length})</Text>
                             <Input placeholder="搜索" mb={2} value={searchSelectedText} onChange={(e) => setSearchSelectedText(e.target.value)} />
-                            <Box maxH="55vh" overflowY="auto" p={2} borderRadius="md">
+                            <Box maxH="55vh" overflowY="auto" p={2} borderRadius="md" borderWidth="1px" borderColor="border" bg="bg.panel">
                                 <Flex mb={2} alignItems="center" justifyContent="space-between">
-                                    <Text fontSize="xs" color="gray.500">
+                                    <Text fontSize="xs" color="fg.muted">
                                         提示：拖拽可调整顺序
                                     </Text>
-                                    <Button onClick={handleClearAll} size={'sm'} colorScheme="red">
+                                    <Button onClick={handleClearAll} size={'sm'} colorPalette="red">
                                         清空
                                     </Button>
                                 </Flex>
@@ -149,7 +157,7 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                                 {filteredSelected.map((u) => {
                                     const actualIndex = selectedUnits.indexOf(u.value);
                                     return (
-                                        <Flex key={String(u.value)} alignItems="center" justifyContent="space-between" _hover={{ bg: innerHoverBg }}>
+                                        <Flex key={String(u.value)} alignItems="center" justifyContent="space-between" _hover={{ bg: "bg.subtle" }}>
                                             <Box
                                                 p={1}
                                                 cursor="grab"
@@ -164,7 +172,9 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                                                 alignItems="center"
                                             >
                                                 {u.nickname ? u.nickname : u.display}
-                                                <IconButton aria-label="移除" icon={<CloseIcon />} size="xs" onClick={() => handleRemove(u.value)} />
+                                                <Button variant="ghost" colorPalette="red" aria-label="移除" size="xs" onClick={() => handleRemove(u.value)} px={0}>
+                                                    <IoClose />
+                                                </Button>
                                             </Box>
                                         </Flex>
                                     );
@@ -175,10 +185,10 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                 </ModalBody>
 
                 <ModalFooter>
-                    <Button onClick={handleSave} colorScheme="blue" mr={3}>
+                    <Button onClick={handleSave} colorPalette="blue" mr={3}>
                         保存
                     </Button>
-                    <Button onClick={handleClose}>取消</Button>
+                    <Button variant="ghost" onClick={handleClose}>取消</Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>

@@ -1,7 +1,15 @@
+import { Box, Flex, Table } from '@chakra-ui/react';
 import { DataItem, HeaderItem, iTableResult } from '@interfaces/ModuleResult';
-import { Table, Thead, Tbody, Tr, Th, Td, TableContainer, useColorModeValue, Box, Flex, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody } from '@chakra-ui/react';
-import { useMemo, useState } from 'react';
+import {
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+} from '../../components/ui/modal';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
+import { useMemo, useState } from 'react';
 
 type SortConfig = {
     key: string
@@ -14,10 +22,10 @@ interface HeaderColumn {
     index: number
 }
 
-export function TableResult({ header, data }: iTableResult) {
-    const color1 = useColorModeValue('blue.50', 'blue.800');
-    const color2 = useColorModeValue('green.50', 'green.800');
+const color1 = { base: 'blue.50', _dark: 'blue.800' }
+const color2 = { base: 'green.50', _dark: 'green.800' }
 
+export function TableResult({ header, data }: iTableResult) {
     const [sortConfig, setSortConfig] = useState<SortConfig>(null)
 
     const getByPath = (row: DataItem, path: string): DataItem | null => {
@@ -109,7 +117,7 @@ export function TableResult({ header, data }: iTableResult) {
             const color = row[i].index % 2 == 0 ? color1 : color2;
 
             cells.push(
-                <Th
+                <Table.ColumnHeader
                     key={`${level}-${i}`}
                     colSpan={colSpan}
                     rowSpan={rowSpan}
@@ -140,10 +148,10 @@ export function TableResult({ header, data }: iTableResult) {
                             </Box>
                         )}
                     </Flex>
-                </Th >
+                </Table.ColumnHeader >
             )
         }
-        return <Tr key={level}>{cells}</Tr>
+        return <Table.Row key={level}>{cells}</Table.Row>
     }
 
     const renderRowCells = (
@@ -155,11 +163,11 @@ export function TableResult({ header, data }: iTableResult) {
     ): React.ReactNode[] => {
         return defs.flatMap((def, ci) => {
             if (typeof def === 'string') {
-                return <Td border="1px solid gray" key={`ceil-${def}-${prefix}-${ri}-${ci}`}
+                return <Table.Cell border="1px solid gray" key={`ceil-${def}-${prefix}-${ri}-${ci}`}
                     whiteSpace="pre"
                     bg={index == -1 ? ci % 2 == 0 ? color1 : color2 : index % 2 == 0 ? color1 : color2}
                 >{(row as Record<string, DataItem>)[def] as string ?? ''}
-                </Td>
+                </Table.Cell>
             } else {
                 const key = Object.keys(def)[0]
                 const children = def[key]
@@ -168,7 +176,7 @@ export function TableResult({ header, data }: iTableResult) {
                     groupVal !== undefined &&
                     typeof groupVal !== 'object'
                 ) {
-                    return <Td whiteSpace="pre" border="1px solid gray" key={`ceil-${key}-${prefix}-${ri}-${ci}`}>{groupVal}</Td>
+                    return <Table.Cell whiteSpace="pre" border="1px solid gray" key={`ceil-${key}-${prefix}-${ri}-${ci}`}>{groupVal}</Table.Cell>
                 }
                 return renderRowCells(children, groupVal || {}, ri, `${prefix}${key}.`, index == -1 ? ci : index)
             }
@@ -176,15 +184,15 @@ export function TableResult({ header, data }: iTableResult) {
     }
 
     return (
-        <TableContainer
+        <Box
             rounded="lg"
             boxShadow="lg"
             overflowX="auto"
             overflowY="auto"
             maxH="calc(100vh - 100px)"
         >
-            <Table size="sm" variant="unstyled"
-                sx={{
+            <Table.Root size="sm" variant="outline"
+                css={{
                     'td:first-of-type': {
                         position: 'sticky',
                         left: 0,
@@ -193,18 +201,18 @@ export function TableResult({ header, data }: iTableResult) {
                     },
                 }}
             >
-                <Thead>
+                <Table.Header>
                     {headerRows.map((row, idx) => renderHeaderRow(row, idx))}
-                </Thead>
-                <Tbody>
+                </Table.Header>
+                <Table.Body>
                     {sortedData.map((row, ri) => (
-                        <Tr key={ri}>
+                        <Table.Row key={ri}>
                             {renderRowCells(header, row, ri)}
-                        </Tr>
+                        </Table.Row>
                     ))}
-                </Tbody>
-            </Table>
-        </TableContainer>
+                </Table.Body>
+            </Table.Root>
+        </Box>
     );
 }
 
