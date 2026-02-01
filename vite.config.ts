@@ -104,21 +104,17 @@ export default defineConfig(({ mode }) => {
 		target: 'es2020',         
 		sourcemap: false,        
 		brotliSize: true,
-		rollupOptions: {
-		  output: {
+        rollupOptions: {
+            output: {
 			manualChunks(id) {
-			  if (id.includes('node_modules')) {
-                if (id.includes('xlsx') || id.includes('file-saver')) return 'xlsx';
-                if (id.includes('react-icons')) return 'icons';
-                if (id.includes('@chakra-ui') || id.includes('@emotion') || id.includes('framer-motion')) return 'chakra';
-                if (id.includes('@tanstack') || id.includes('react-location')) return 'tanstack';
-                if (id.includes('axios')) return 'utils';
-                if (id.includes('react') || id.includes('react-dom')) return 'react-vendor';
-                
+              if (id.includes('node_modules')) {
+				if (id.includes('@chakra-ui')) return 'chakra'
+				if (id.includes('framer-motion')) return 'motion'
+				if (id.includes('xlsx')) return 'xlsx'
 				return 'vendor'
-			  }
+              }
 			}
-		  }
+          }
 		}
 	},
     resolve: {

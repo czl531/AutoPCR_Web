@@ -133,7 +133,7 @@ export function BoxDataTable({ logContent }: BoxDataTableProps) {
     const bgColor = useColorModeValue('gray.50', 'gray.800')  // 浅色模式下为 gray.50，深色模式下为 gray.800
     const headerBgColor = useColorModeValue('gray.100', 'gray.700')  // 表头背景色
     const color1 = useColorModeValue('blue.50', 'blue.900')  // 交替行颜色1
-    const color2 = useColorModeValue('yellow.50', 'yellow.900')  // 交替行颜色2
+    const color2 = useColorModeValue('green.50', 'green.900')  // 交替行颜色2
 
     if (userData.length === 0) {
         return null
