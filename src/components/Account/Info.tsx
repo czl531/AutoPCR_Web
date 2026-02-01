@@ -213,7 +213,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                     <Card.Header pb={2}>
                                         <Text fontWeight="semibold" color="fg.muted">未选择的账号 ({unselectedAccounts.length})</Text>
                                     </Card.Header>
-                                    <Card.Body pt={0} maxH="400px" overflowY="auto">
+                                    <Card.Body pt={0} overflowY="auto">
                                         <VStack align="start" gap={1}>
                                             {unselectedAccounts.map((account) => (
                                                 <Checkbox
@@ -240,7 +240,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                     <Card.Header pb={2} bg="blue.subtle/20" borderTopRadius="md">
                                         <Text fontWeight="semibold" color="blue.fg">已选择的账号 ({batchAccounts.length})</Text>
                                     </Card.Header>
-                                    <Card.Body pt={2} maxH="400px" overflowY="auto">
+                                    <Card.Body pt={2} overflowY="auto">
                                         <VStack align="start" gap={1}>
                                             {batchAccounts.map((account) => (
                                                 <Checkbox
