@@ -10,6 +10,7 @@ import { parseMemoryTable } from './MemoryUtils';
 import { BoxDataTable } from './BoxDataTable';
 import { BoxExcelExport } from './BoxExcelExport';
 import { TalentDataTable } from './TalentDataTable';
+import { RoleDataTable } from './RoleDataTable';
 import { TableResultWrapper } from './TableResultWrapper';
 import { toaster } from '../../components/ui/toaster';
 
@@ -39,11 +40,13 @@ function SingleResultTable({ resultData }: SingleResultProps) {
     // 检查是否为需要显示角色练度表格的模块
     const boxDataModules = ['查box（多选）'];
     const talentDataModules = ['查属性练度'];
+    const roleDataModules = ['查职能练度'];
 
     const isTableModule = resultData?.name ? tableModules.includes(resultData.name) : false;
     const isExcelModule = resultData?.name ? excelModules.includes(resultData.name) : false;
     const isBoxDataModule = resultData?.name ? boxDataModules.includes(resultData.name) : false;
     const isTalentDataModules = resultData?.name ? talentDataModules.includes(resultData.name) : false;
+    const isRoleDataModules = resultData?.name ? roleDataModules.includes(resultData.name) : false;
 
     const tableData = isTableModule && resultData?.log ? parseMemoryTable(resultData.log) : { items: [], accountNames: [] };
 
@@ -75,7 +78,7 @@ function SingleResultTable({ resultData }: SingleResultProps) {
                                 <TableResultWrapper {...resultData.table} />
                             </Table.Cell>
                             </Table.Row>}
-                        {!isTableModule && !isBoxDataModule && !isTalentDataModules && (
+                        {!isTableModule && !isBoxDataModule && !isTalentDataModules && !isRoleDataModules && (
                         <Table.Row>
                             <Table.Cell>结果</Table.Cell>
                             <Table.Cell style={{ whiteSpace: 'pre-wrap' }}>
@@ -94,6 +97,7 @@ function SingleResultTable({ resultData }: SingleResultProps) {
             {isTableModule && tableData.items.length > 0 && <MemoryTable data={tableData} />}
             {isBoxDataModule && <BoxDataTable logContent={resultData?.log} />}
             {isTalentDataModules && <TalentDataTable logContent={resultData?.log} />}
+            {isRoleDataModules && <RoleDataTable logContent={resultData?.log} />}
         </>
     )
 }

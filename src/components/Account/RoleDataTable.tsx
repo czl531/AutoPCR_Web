@@ -2,34 +2,27 @@ import { Table, Box } from '@chakra-ui/react';
 import { useMemo } from 'react';
 import { useColorModeValue } from "@/components/ui/color-mode"
 
-interface TalentData {
-    talent_levels: Record<string, number>;
-    skill_tree: string;
-    team_skill: number;
+interface RoleData {
+    role_levels: Record<string, string>;
 }
 
-interface UserTalentData {
+interface UserRoleData {
     user_name: string;
-    uid?: number;
     data_time?: string;
-    jewel?: number;
-    mother_stone?: number;
-    star_cup?: number;
-    heart_fragment?: number;
     user_info?: string[];
-    talent_data: TalentData;
+    role_data: RoleData;
 }
 
-interface TalentDataTableProps {
+interface RoleDataTableProps {
     logContent: string | undefined;
 }
 
-export function TalentDataTable({ logContent }: TalentDataTableProps) {
-    // 解析日志内容，提取用户天赋数据
-    const userTalentData = useMemo(() => {
+export function RoleDataTable({ logContent }: RoleDataTableProps) {
+    // 解析日志内容，提取用户职能数据
+    const userRoleData = useMemo(() => {
         if (!logContent) return [];
 
-        const userDataArray: UserTalentData[] = [];
+        const userDataArray: UserRoleData[] = [];
         
         // 检查是否是新格式（以 ===用户名=== 开头）
         if (logContent.startsWith('===')) {
@@ -42,24 +35,24 @@ export function TalentDataTable({ logContent }: TalentDataTableProps) {
                 
                 if (!userName || !section) continue;
 
-                const talentDataMatch = section.match(/{.*}/s);
-                if (talentDataMatch) {
+                const roleDataMatch = section.match(/{.*}/s);
+                if (roleDataMatch) {
                     try {
-                        const talentData = JSON.parse(talentDataMatch[0]) as TalentData;
+                        const roleData = JSON.parse(roleDataMatch[0]) as RoleData;
                         
                         // 提取时间信息
                         const dateTimeMatch = section.match(/\[(.*?)\]/);
                         
-                        const userTalent: UserTalentData = {
+                        const userRole: UserRoleData = {
                             user_name: userName,
                             data_time: dateTimeMatch?.[1],
                             user_info: dateTimeMatch ? ['数据时间'] : [],
-                            talent_data: talentData
+                            role_data: roleData
                         };
 
-                        userDataArray.push(userTalent);
+                        userDataArray.push(userRole);
                     } catch (e) {
-                        console.error('解析天赋数据失败:', e);
+                        console.error('解析职能数据失败:', e);
                     }
                 }
             }
@@ -70,25 +63,21 @@ export function TalentDataTable({ logContent }: TalentDataTableProps) {
                 const logMatch = logContent.match(/{.*}/s);
                 if (logMatch) {
                     const logData = JSON.parse(logMatch[0]) as Partial<{
-                        talent_levels: Record<string, number>;
-                        skill_tree: string;
-                        team_skill: number;
+                        role_levels: Record<string, string>;
                     }>;
                     
                     // 从日志内容中提取用户名（在第一个 === 之前）
                     const userNameMatch = logContent.match(/===(.*?)===/);
                     
-                    const userTalent: UserTalentData = {
+                    const userRole: UserRoleData = {
                         user_name: userNameMatch?.[1] ?? '我我', // 默认用户名
                         user_info: [], // 新格式不包含额外信息
-                        talent_data: {
-                            talent_levels: logData.talent_levels ?? {},
-                            skill_tree: logData.skill_tree ?? '',
-                            team_skill: logData.team_skill ?? 0
+                        role_data: {
+                            role_levels: logData.role_levels ?? {}
                         }
                     };
                     
-                    userDataArray.push(userTalent);
+                    userDataArray.push(userRole);
                 }
             } catch (e) {
                 console.error('解析旧格式日志失败:', e);
@@ -101,21 +90,24 @@ export function TalentDataTable({ logContent }: TalentDataTableProps) {
     const bgColor = useColorModeValue('white', 'gray.700');
     const headerBgColor = useColorModeValue('gray.100', 'gray.600');
 
-    if (userTalentData.length === 0) {
+    if (userRoleData.length === 0) {
         return null;
     }
 
-    // 属性类型映射
-    const attributeMap = [
-        { key: '1', name: '火' },
-        { key: '2', name: '水' },
-        { key: '3', name: '风' },
-        { key: '4', name: '光' },
-        { key: '5', name: '暗' }
+    // 职能类型映射
+    const roleMap = [
+        { key: '攻击', name: '攻击' },
+        { key: '破防', name: '破防' },
+        { key: '增益', name: '增益' },
+        { key: '减益', name: '减益' },
+        { key: '强化', name: '强化' },
+        { key: '治疗', name: '治疗' },
+        { key: '坦克', name: '坦克' },
+        { key: '干扰', name: '干扰' }
     ];
     
     // 获取第一个用户的信息列配置
-    const infoColumns = userTalentData[0]?.user_info?.length ? userTalentData[0].user_info : [];
+    const infoColumns = userRoleData[0]?.user_info?.length ? userRoleData[0].user_info : [];
 
     return (
         <Box mt={4} rounded="lg" bg={bgColor} boxShadow="lg">
@@ -138,27 +130,21 @@ export function TalentDataTable({ logContent }: TalentDataTableProps) {
                                     数据时间
                                 </Table.ColumnHeader>
                             )}
-                            {attributeMap.map(attr => (
+                            {roleMap.map(role => (
                                 <Table.ColumnHeader 
-                                    key={attr.key} 
+                                    key={role.key} 
                                     textAlign="center" 
                                     fontSize="xs" 
                                     border="1px solid gray" 
                                     p={1}
                                 >
-                                    {attr.name}
+                                    {role.name}
                                 </Table.ColumnHeader>
                             ))}
-                            <Table.ColumnHeader border="1px solid gray" p={1}>
-                                属性技能
-                            </Table.ColumnHeader>
-                            <Table.ColumnHeader border="1px solid gray" p={1}>
-                                大师技能
-                            </Table.ColumnHeader>
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
-                        {userTalentData.map((user) => (
+                        {userRoleData.map((user) => (
                             <Table.Row key={user.user_name}>
                                 <Table.Cell 
                                     outline="1px solid gray" 
@@ -175,22 +161,16 @@ export function TalentDataTable({ logContent }: TalentDataTableProps) {
                                         {user.data_time}
                                     </Table.Cell>
                                 )}
-                                {attributeMap.map(attr => (
+                                {roleMap.map(role => (
                                     <Table.Cell 
-                                        key={attr.key} 
+                                        key={role.key} 
                                         textAlign="center" 
                                         border="1px solid gray" 
                                         p={1}
                                     >
-                                        {user.talent_data.talent_levels[attr.key]}
+                                        {user.role_data.role_levels[role.key] || '-'}
                                     </Table.Cell>
                                 ))}
-                                <Table.Cell border="1px solid gray" p={1}>
-                                    {user.talent_data.skill_tree}
-                                </Table.Cell>
-                                <Table.Cell border="1px solid gray" p={1}>
-                                    {user.talent_data.team_skill}
-                                </Table.Cell>
                             </Table.Row>
                         ))}
                     </Table.Body>
