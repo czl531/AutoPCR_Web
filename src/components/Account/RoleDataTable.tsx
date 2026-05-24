@@ -173,7 +173,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                                     </Table.Cell>
                                 )}
                                 <Table.Cell
-                                    textAlign="center"
+                                    textAlign="left"
                                     border="1px solid gray"
                                     p={1}
                                 >
