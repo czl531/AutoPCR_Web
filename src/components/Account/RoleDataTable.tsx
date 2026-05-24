@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useColorModeValue } from "@/components/ui/color-mode"
 
 interface RoleData {
+    role_gacha?: string;
     role_levels: Record<string, string>;
 }
 
@@ -63,6 +64,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                 const logMatch = logContent.match(/{.*}/s);
                 if (logMatch) {
                     const logData = JSON.parse(logMatch[0]) as Partial<{
+                        role_gacha: string;
                         role_levels: Record<string, string>;
                     }>;
                     
@@ -73,6 +75,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                         user_name: userNameMatch?.[1] ?? '我我', // 默认用户名
                         user_info: [], // 新格式不包含额外信息
                         role_data: {
+                            role_gacha: logData.role_gacha,
                             role_levels: logData.role_levels ?? {}
                         }
                     };
@@ -130,6 +133,14 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                                     数据时间
                                 </Table.ColumnHeader>
                             )}
+                            <Table.ColumnHeader
+                                textAlign="center"
+                                fontSize="xs"
+                                border="1px solid gray"
+                                p={1}
+                            >
+                                精通等级
+                            </Table.ColumnHeader>
                             {roleMap.map(role => (
                                 <Table.ColumnHeader 
                                     key={role.key} 
@@ -161,6 +172,13 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                                         {user.data_time}
                                     </Table.Cell>
                                 )}
+                                <Table.Cell
+                                    textAlign="center"
+                                    border="1px solid gray"
+                                    p={1}
+                                >
+                                    {user.role_data.role_gacha ?? '-'}
+                                </Table.Cell>
                                 {roleMap.map(role => (
                                     <Table.Cell 
                                         key={role.key} 
