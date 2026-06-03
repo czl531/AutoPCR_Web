@@ -586,6 +586,10 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
     const buttomLoading = useDisclosure();
     const alias = account.name;
     const deleteConfirm = useDisclosure();
+    const stamina = account.daily_clean_time.stamina;
+    const staminaMax = account.daily_clean_time.stamina_max;
+    const staminaText = typeof stamina === 'number' ? (typeof staminaMax === 'number' && staminaMax > 0 ? `${stamina}/${staminaMax}` : String(stamina)) : '-';
+    const isStaminaOverflow = typeof stamina === 'number' && typeof staminaMax === 'number' && staminaMax > 0 && stamina > staminaMax;
     
     const handleCleanDaily = async () => {
         buttomLoading.onOpen();
@@ -684,7 +688,13 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                     </HStack>
                 </Table.Cell>
                 <Table.Cell px={3} py={3}>
-                    <StatusBadge />
+                    <HStack gap={2} wrap="wrap">
+                        <StatusBadge />
+                        <Tag.Root colorPalette={isStaminaOverflow ? "red" : "blue"} variant="subtle">
+                            <Tag.StartElement><FiActivity /></Tag.StartElement>
+                            <Tag.Label>体力 {staminaText}</Tag.Label>
+                        </Tag.Root>
+                    </HStack>
                 </Table.Cell>
                 <Table.Cell px={3} py={3}>
                     <HStack gap={1}>
@@ -764,6 +774,10 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                             >
                                 <Tag.Label>{account.daily_clean_time.status}</Tag.Label>
                             </Tag.Root>
+                        </Flex>
+                        <Flex justify="space-between" align="center" mt={1}>
+                            <Text fontSize="xs" color="fg.muted">体力</Text>
+                            <Text fontSize="xs" fontWeight="bold" color={isStaminaOverflow ? "red.fg" : undefined}>{staminaText}</Text>
                         </Flex>
                     </Box>
                 </Stack>

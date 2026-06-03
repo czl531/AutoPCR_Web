@@ -92,6 +92,10 @@ export interface Candidate {
 	* 昵称
 	*/
     nickname?: string;
+    /**
+	* 图标
+	*/
+    icon?: string;
 }
 
 export type ConfigValue = number | string | boolean | (string | number)[];

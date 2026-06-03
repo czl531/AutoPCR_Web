@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Input, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Image, Input, Text } from '@chakra-ui/react';
 import { Candidate, ConfigValue } from '@interfaces/Module';
 import {
     Modal,
@@ -17,6 +17,53 @@ import { IoClose } from 'react-icons/io5';
 interface MultiSelectModalProps {
     candidates: Candidate[];
     value: ConfigValue[];
+}
+
+function normalizeSearchText(text: string) {
+    return text.normalize('NFKC').toLowerCase().trim();
+}
+
+function candidateAliases(candidate: Candidate) {
+    return [
+        String(candidate.value),
+        candidate.display,
+        candidate.nickname,
+        ...(candidate.tags ?? []),
+    ]
+        .filter((alias): alias is string => Boolean(alias))
+        .map(normalizeSearchText)
+        .filter(Boolean);
+}
+
+function parseCandidatesFromSearch(text: string, candidates: Candidate[]) {
+    let input = normalizeSearchText(text);
+    if (!input) return { values: [] as ConfigValue[], unknown: '' };
+
+    const aliasMap = new Map<string, ConfigValue>();
+    for (const candidate of candidates) {
+        for (const alias of candidateAliases(candidate)) {
+            if (!aliasMap.has(alias)) {
+                aliasMap.set(alias, candidate.value);
+            }
+        }
+    }
+
+    const aliases = [...aliasMap.keys()].sort((a, b) => b.length - a.length);
+    const values: ConfigValue[] = [];
+    const unknown: string[] = [];
+
+    while (input) {
+        const alias = aliases.find((name) => input.startsWith(name));
+        if (alias) {
+            values.push(aliasMap.get(alias)!);
+            input = input.slice(alias.length).trimStart();
+        } else {
+            unknown.push(input[0]);
+            input = input.slice(1).trimStart();
+        }
+    }
+
+    return { values: [...new Set(values)], unknown: unknown.join('') };
 }
 
 const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectModalProps) => {
@@ -44,6 +91,14 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
             setSelectedUnits([...selectedUnits, id]);
             setAvailableUnits(availableUnits.filter((u) => u.value !== id));
         }
+    };
+
+    const handleAddMany = (ids: ConfigValue[]) => {
+        const addIds = ids.filter((id) => !selectedUnits.includes(id));
+        if (!addIds.length) return;
+
+        setSelectedUnits([...selectedUnits, ...addIds]);
+        setAvailableUnits(availableUnits.filter((u) => !addIds.includes(u.value)));
     };
 
     const handleRemove = (id: ConfigValue) => {
@@ -98,16 +153,42 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
         setAvailableUnits(candidates);
     };
 
-    const filteredAvailable = availableUnits.filter((u) => String(u.value).includes(searchAllText) || String(u.display).includes(searchAllText) || u.tags?.some((tag) => tag.toLowerCase().includes(searchAllText.toLowerCase())));
+    const parsedAvailableSearch = parseCandidatesFromSearch(searchAllText, candidates);
+    const parsedSelectedSearch = parseCandidatesFromSearch(searchSelectedText, candidates);
+
+    const isCandidateMatched = (u: Candidate, searchText: string, parsedValues: ConfigValue[]) => {
+        if (!searchText) return true;
+        if (parsedValues.includes(u.value)) return true;
+
+        const normalizedSearchText = normalizeSearchText(searchText);
+        return candidateAliases(u).some((alias) => alias.includes(normalizedSearchText));
+    };
+
+    const filteredAvailable = availableUnits.filter((u) => isCandidateMatched(u, searchAllText, parsedAvailableSearch.values));
 
     const selectedObjects = selectedUnits.map((id) => {
         const u = candidates.find((u) => u.value === id);
-        return u ?? { value: id, display: id, tags: [], nickname: null };
+        return u ?? { value: id, display: String(id), tags: [] };
     });
 
-    const filteredSelected = selectedObjects.filter(u =>
-        String(u.value).includes(searchSelectedText) ||
-        u.tags?.some(tag => tag.toLowerCase().includes(searchSelectedText.toLowerCase()))
+    const filteredSelected = selectedObjects.filter((u) => isCandidateMatched(u, searchSelectedText, parsedSelectedSearch.values));
+
+    const renderCandidateContent = (u: Candidate) => (
+        <Flex alignItems="center" gap={2} minW={0}>
+            {u.icon && (
+                <Image
+                    src={u.icon}
+                    alt=""
+                    boxSize="30px"
+                    objectFit="contain"
+                    flexShrink={0}
+                    onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                    }}
+                />
+            )}
+            <Text as="span">{u.nickname ? u.nickname : u.display}</Text>
+        </Flex>
     );
 
     return (
@@ -122,20 +203,31 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                             <Text mb={2}>未选择 ({availableUnits.length})</Text>
                             <Input placeholder="搜索" mb={2} value={searchAllText} onChange={(e) => setSearchAllText(e.target.value)} />
                             <Box maxH="55vh" overflowY="auto" p={2} borderRadius="md" borderWidth="1px" borderColor="border" bg="bg.panel">
-                                <Button
-                                    size="sm"
-                                    colorPalette="green"
-                                    onClick={() => {
-                                        const allValues = filteredAvailable.map(u => u.value);
-                                        setSelectedUnits([...new Set([...selectedUnits, ...allValues])]);
-                                        setAvailableUnits(availableUnits.filter(u => !allValues.includes(u.value)));
-                                    }}
-                                >
-                                    全选
-                                </Button>
+                                <Flex mb={2} gap={2} wrap="wrap">
+                                    <Button
+                                        size="sm"
+                                        colorPalette="green"
+                                        onClick={() => {
+                                            const allValues = filteredAvailable.map(u => u.value);
+                                            setSelectedUnits([...new Set([...selectedUnits, ...allValues])]);
+                                            setAvailableUnits(availableUnits.filter(u => !allValues.includes(u.value)));
+                                        }}
+                                    >
+                                        全选
+                                    </Button>
+                                    {parsedAvailableSearch.values.length > 0 && (
+                                        <Button
+                                            size="sm"
+                                            colorPalette="blue"
+                                            onClick={() => handleAddMany(parsedAvailableSearch.values)}
+                                        >
+                                            添加识别 ({parsedAvailableSearch.values.length})
+                                        </Button>
+                                    )}
+                                </Flex>
                                 {filteredAvailable.map((u, id) => (
                                     <Box key={id} p={1} cursor="pointer" _hover={{ bg: "bg.subtle" }} onClick={() => handleAdd(u.value)}>
-                                        {u.nickname ? u.nickname : u.display}
+                                        {renderCandidateContent(u)}
                                     </Box>
                                 ))}
                             </Box>
@@ -171,7 +263,7 @@ const multiSelectModal = NiceModal.create(({ candidates, value }: MultiSelectMod
                                                 justifyContent="space-between"
                                                 alignItems="center"
                                             >
-                                                {u.nickname ? u.nickname : u.display}
+                                                {renderCandidateContent(u)}
                                                 <Button variant="ghost" colorPalette="red" aria-label="移除" size="xs" onClick={() => handleRemove(u.value)} px={0}>
                                                     <IoClose />
                                                 </Button>

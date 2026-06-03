@@ -99,6 +99,14 @@ export interface ResultInfo {
    * 结果状态
    */
   status: "成功" | "警告" | "错误" | '跳过' | '中止';
+  /**
+   * 体力
+   */
+  stamina?: number;
+  /**
+   * 体力上限
+   */
+  stamina_max?: number;
 }
 
 export interface LoginLog {
