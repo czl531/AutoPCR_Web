@@ -935,6 +935,9 @@ function AccountInfo({
                                 alignItems="center"
                                 h="2rem"
                                 fontSize="sm"
+                                w="7rem"
+                                maxW="7rem"
+                                overflow="hidden"
                             >
                                 {nameInput}
                             </Box>
