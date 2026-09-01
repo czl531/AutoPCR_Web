@@ -972,7 +972,7 @@ function AccountInfo({
 
                 <Table.Cell px={0} py={3}>
                     <Stack gap={0}>
-                            <Box minW="5rem" maxW="100%" onClick={(e) => e.stopPropagation()}>
+                            <Box minW="4rem" maxW="100%" onClick={(e) => e.stopPropagation()}>
                                 {tableNameInput}
                             </Box>
                             <HStack gap={1}>
