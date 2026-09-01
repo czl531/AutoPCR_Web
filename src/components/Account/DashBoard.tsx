@@ -926,10 +926,18 @@ function AccountInfo({
                 <Table.Cell px={0} py={3}>
                     <HStack gap={2}>
                         <Box w="32px" h="32px" bg="blue.subtle" color="blue.fg" borderRadius="full" display="flex" alignItems="center" justifyContent="center" fontSize="sm">
-                            {alias.charAt(0).toUpperCase()}
+                            {displayName.charAt(0).toUpperCase()}
                         </Box>
                         <Stack gap={0}>
-                            <Text fontWeight="bold" fontSize="sm">{alias}</Text>
+                            <Box
+                                onClick={(e) => e.stopPropagation()}
+                                display="flex"
+                                alignItems="center"
+                                h="2rem"
+                                fontSize="sm"
+                            >
+                                {nameInput}
+                            </Box>
                             <HStack gap={1}>
                                 {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
                                 {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
@@ -945,7 +953,7 @@ function AccountInfo({
                     onClick={goDetail}
                     title="进入详细设置"
                 >
-                    <Flex align="center" gap={2} minW={0}>
+                    <Stack align="start" gap={1}>
                         <Tag.Root colorPalette={statusMeta.color} variant="subtle" flexShrink={0}>
                             <Tag.StartElement>{statusMeta.icon}</Tag.StartElement>
                             <Tag.Label>
@@ -957,7 +965,7 @@ function AccountInfo({
                             <Tag.StartElement><FiActivity /></Tag.StartElement>
                             <Tag.Label>体力 {staminaText}</Tag.Label>
                         </Tag.Root>
-                    </Flex>
+                    </Stack>
                 </Table.Cell>
 
                 <Table.Cell
