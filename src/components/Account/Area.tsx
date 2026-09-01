@@ -22,6 +22,7 @@ export interface TocItem {
 export default function Area({ alias, keys: key }: AreaProps) {
 
     const [config, setConfig] = useState<ModuleResponse | null>(null);
+    const [runningModule, setRunningModule] = useState<string | null>(null);
     const { open, onOpen, onClose } = useDisclosure()
 
     useEffect(() => {
@@ -59,7 +60,18 @@ export default function Area({ alias, keys: key }: AreaProps) {
                     ))
                 ) : (
                     config?.order.map((module) => (
-                        <Module key={module} id={module} alias={alias} config={config?.config} info={(config.info[module])} isOpen={open} onOpen={onOpen} onClose={onClose} />
+                        <Module
+                            key={module}
+                            id={module}
+                            alias={alias}
+                            config={config?.config}
+                            info={config.info[module]}
+                            isOpen={open}
+                            isRunning={runningModule === module}
+                            onOpen={onOpen}
+                            onClose={onClose}
+                            onRunningModuleChange={setRunningModule}
+                        />
                     ))
                 )}
             </Stack>

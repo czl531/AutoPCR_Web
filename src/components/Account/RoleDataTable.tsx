@@ -1,10 +1,14 @@
 import { Table, Box } from '@chakra-ui/react';
 import { useMemo } from 'react';
 import { useColorModeValue } from "@/components/ui/color-mode"
+import { RoleUpgradePlanner, type RoleCost, type RoleMaterial, type RoleSlot } from './RoleUpgradePlanner';
 
 interface RoleData {
     role_gacha?: string;
     role_levels: Record<string, string>;
+    role_slots?: RoleSlot[];
+    role_materials?: RoleMaterial[];
+    role_costs?: RoleCost[];
 }
 
 interface UserRoleData {
@@ -25,9 +29,10 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
 
         const userDataArray: UserRoleData[] = [];
         
-        // 检查是否是新格式（以 ===用户名=== 开头）
-        if (logContent.startsWith('===')) {
-            const userSections = logContent.split('===');
+        // 检查是否是新格式（以 ===用户名=== 开头）。日志有时会带前导换行。
+        const normalizedLogContent = logContent.trimStart();
+        if (normalizedLogContent.startsWith('===')) {
+            const userSections = normalizedLogContent.split('===');
             
             // 两两一组处理（用户名 + 数据）
             for (let i = 1; i < userSections.length; i += 2) {
@@ -63,10 +68,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                 // 提取日志中的 JSON 部分
                 const logMatch = logContent.match(/{.*}/s);
                 if (logMatch) {
-                    const logData = JSON.parse(logMatch[0]) as Partial<{
-                        role_gacha: string;
-                        role_levels: Record<string, string>;
-                    }>;
+                    const logData = JSON.parse(logMatch[0]) as Partial<RoleData>;
                     
                     // 从日志内容中提取用户名（在第一个 === 之前）
                     const userNameMatch = logContent.match(/===(.*?)===/);
@@ -74,10 +76,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                     const userRole: UserRoleData = {
                         user_name: userNameMatch?.[1] ?? '我我', // 默认用户名
                         user_info: [], // 新格式不包含额外信息
-                        role_data: {
-                            role_gacha: logData.role_gacha,
-                            role_levels: logData.role_levels ?? {}
-                        }
+                        role_data: { ...logData, role_levels: logData.role_levels ?? {} }
                     };
                     
                     userDataArray.push(userRole);
@@ -113,6 +112,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
     const infoColumns = userRoleData[0]?.user_info?.length ? userRoleData[0].user_info : [];
 
     return (
+        <>
         <Box mt={4} rounded="lg" bg={bgColor} boxShadow="lg">
             <Table.ScrollArea>
                 <Table.Root size="sm">
@@ -195,5 +195,7 @@ export function RoleDataTable({ logContent }: RoleDataTableProps) {
                 </Table.Root>
             </Table.ScrollArea>
         </Box>
+        <RoleUpgradePlanner users={userRoleData} />
+        </>
     );
 }

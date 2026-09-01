@@ -28,6 +28,12 @@ export interface iTableResult {
 
 export interface ModuleResult {
 	/**
+	* 模块 key，后端如果返回 get_box_table 这类 id，前端可直接按 key 选择渲染器
+	*/
+	key?: string;
+	module?: string;
+	module_key?: string;
+	/**
 	* 模块名称
 	*/
 	name: string;

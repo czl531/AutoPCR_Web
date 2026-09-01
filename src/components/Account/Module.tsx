@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { Box, Button, Card, Flex, HStack, Heading, Separator, Stack, Tag, useDisclosure } from '@chakra-ui/react'
+import { Box, Button, Card, Flex, HStack, Heading, Separator, Stack, Tag } from '@chakra-ui/react'
 import { ConfigValue, ModuleInfo } from '@interfaces/Module';
 import { FiChevronDown } from 'react-icons/fi';
-import { getAccountAreaSingleResultList, postAccountAreaSingle, putAccountConfig } from '@api/Account';
+import { getAccountAreaSingleResultList, postAccountAreaSingle, postAccountTaskStop, putAccountConfig } from '@api/Account';
 
 import { AxiosError } from 'axios';
 import { Checkbox } from '../../components/ui/checkbox';
@@ -17,12 +17,32 @@ interface ModuleProps extends React.ComponentProps<typeof Card.Root> {
     config: Record<string, ConfigValue>,
     info: ModuleInfo
     isOpen: boolean,
+    isRunning: boolean,
     onOpen: () => void,
-    onClose: () => void
+    onClose: () => void,
+    onRunningModuleChange: (module: string | null) => void
 }
 
-export default function Module({ alias, config, info, isOpen, onOpen, onClose, ...rest }: ModuleProps) {
-    const { open: isExpanded, onToggle: onToggleExpand } = useDisclosure({ defaultOpen: false });
+export default function Module({ alias, config, info, isOpen, isRunning, onOpen, onClose, onRunningModuleChange, ...rest }: ModuleProps) {
+    const expandStateKey = React.useMemo(
+        () => `autopcr:module-expanded:${alias}:${info.key}`,
+        [alias, info.key],
+    );
+    const [isExpanded, setIsExpanded] = React.useState(() =>
+        typeof window !== 'undefined' && window.localStorage.getItem(expandStateKey) === 'true',
+    );
+
+    React.useEffect(() => {
+        setIsExpanded(window.localStorage.getItem(expandStateKey) === 'true');
+    }, [expandStateKey]);
+
+    const onToggleExpand = () => {
+        setIsExpanded((expanded) => {
+            const nextExpanded = !expanded;
+            window.localStorage.setItem(expandStateKey, String(nextExpanded));
+            return nextExpanded;
+        });
+    };
 
     const onCheckedChange = (details: { checked: boolean | "indeterminate" }) => {
         putAccountConfig(alias, info?.key, !!details.checked).then((response) => {
@@ -34,15 +54,28 @@ export default function Module({ alias, config, info, isOpen, onOpen, onClose, .
 
     const handleExecute = () => {
         toaster.create({ type: 'info', title: '开始执行' + info?.name + "..." });
+        onRunningModuleChange(info.key);
         onOpen();
         postAccountAreaSingle(alias, info?.key).then(async (res) => {
             toaster.create({ type: 'success', title: '执行成功' });
+            onRunningModuleChange(null);
             onClose();
             await NiceModal.show(ResultInfoModal, { alias: alias, title: info?.name, resultInfo: res });
         }).catch(async (err: AxiosError) => {
             toaster.create({ type: 'error', title: '执行失败', description: await (err.response?.data as Blob).text() || "网络错误" });
+            onRunningModuleChange(null);
             onClose();
         });
+    }
+
+    const handleStop = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await postAccountTaskStop(alias);
+            toaster.create({ type: 'info', title: '已请求终止任务，正在保存已执行结果' });
+        } catch (err: any) {
+            toaster.create({ type: 'error', title: '终止失败', description: err?.response?.data || '当前没有正在执行的任务' });
+        }
     }
 
     const handleResult = (e: React.MouseEvent) => {
@@ -97,7 +130,11 @@ export default function Module({ alias, config, info, isOpen, onOpen, onClose, .
                     </Box>
                     <HStack gap={2}>
                         {info?.runnable &&
-                            <Button size='sm' variant="surface" colorPalette='blue' loading={isOpen} onClick={handleExecuteWrapper}>执行</Button>
+                            isRunning ? (
+                                <Button size='sm' variant="surface" colorPalette='red' onClick={handleStop}>终止</Button>
+                            ) : (
+                                <Button size='sm' variant="surface" colorPalette='blue' loading={isOpen} onClick={handleExecuteWrapper}>执行</Button>
+                            )
                         }
                         {info?.runnable &&
                             <Button size='sm' variant="ghost" colorPalette='blue' loading={isOpen} onClick={handleResult}>结果</Button>

@@ -125,6 +125,11 @@ export async function postAccountAreaSingle(alias: string, module: string) {
   return response.data;
 }
 
+export async function postAccountTaskStop(alias: string) {
+  const response = await API.post<DefaultResponse>(`/account/${alias}/stop`);
+  return response.data;
+}
+
 export async function getAccountDailyResultList(alias: string) {
   const response = await API.get<ResultInfo[]>(`/account/${alias}/daily_result`);
   return response.data
