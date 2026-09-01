@@ -505,13 +505,13 @@ export function DashBoard() {
                                         colorPalette="blue"
                                     />
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={0} fontSize="md" py={4} fontWeight="bold" width="25%" minWidth="80px">
+                                <Table.ColumnHeader px={0} fontSize="md" py={4} fontWeight="bold" width="20%" minWidth="80px">
                                     账号
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
+                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="40%" minWidth="220px">
                                     最近记录
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
+                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="25%">
                                     操作
                                 </Table.ColumnHeader>
                             </Table.Row>
@@ -924,11 +924,7 @@ function AccountInfo({
                 </Table.Cell>
 
                 <Table.Cell px={0} py={3}>
-                    <HStack gap={2}>
-                        <Box w="32px" h="32px" bg="blue.subtle" color="blue.fg" borderRadius="full" display="flex" alignItems="center" justifyContent="center" fontSize="sm">
-                            {displayName.charAt(0).toUpperCase()}
-                        </Box>
-                        <Stack gap={0}>
+                    <Stack gap={0}>
                             <Box
                                 onClick={(e) => e.stopPropagation()}
                                 display="flex"
@@ -945,8 +941,7 @@ function AccountInfo({
                                 {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
                                 {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
                             </HStack>
-                        </Stack>
-                    </HStack>
+                    </Stack>
                 </Table.Cell>
 
                 <Table.Cell
