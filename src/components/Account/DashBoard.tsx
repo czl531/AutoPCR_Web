@@ -13,18 +13,19 @@ import {
     Tag,
     Text,
 } from '@chakra-ui/react';
-import { FiActivity, FiBook, FiCheck, FiCopy, FiGrid, FiKey, FiLayers, FiList, FiStar, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX, FiX } from 'react-icons/fi';
+import { FiActivity, FiBook, FiCheck, FiCopy, FiGrid, FiKey, FiLayers, FiList, FiSettings, FiStar, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
 import { Radio, RadioGroup } from '../../components/ui/radio';
 import React, { ChangeEvent, useMemo, useRef } from 'react';
 import { Skeleton, SkeletonText } from '../../components/ui/skeleton';
 import { clearAccounts, deleteAccount, getAccountDailyResultList, getUserInfo, putUserInfo } from '@api/Account';
-import { delAccount, getAccount, getAccountConfig, postAccount, postAccountAreaDaily, postAccountImport, putAccountConfigs } from '@api/Account';
+import { delAccount, postAccount, postAccountAreaDaily, postAccountImport } from '@api/Account';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 
 import Alert from '../alert';
 import { AxiosError } from 'axios';
 import { Checkbox } from '../../components/ui/checkbox';
+import { CloseButton } from '../../components/ui/close-button';
 import { Route as DashBoardRoute } from '@routes/daily/_sidebar/account/index';
 import { IconButton } from '../../components/ui/icon-button';
 import { Route as LoginRoute } from '@routes/daily/login';
@@ -37,7 +38,6 @@ import { toaster } from '../../components/ui/toaster';
 import { useCountHook } from '../count';
 import { useDisclosure } from '@chakra-ui/react';
 import ConfigSyncModal from './ConfigSyncModal';
-import type { Candidate, ConfigType, ConfigValue, ModuleResponse } from '@interfaces/Module';
 
 const handle: Map<string, (arg0: boolean) => void> = new Map<string, (arg0: boolean) => void>();
 
@@ -621,7 +621,6 @@ function AccountInfo({
     const alias = account.name;
     const deleteConfirm = useDisclosure();
     const navigate = useNavigate();
-    const importFileRef = useRef<HTMLInputElement>(null);
     const cancelRef = React.useRef<HTMLButtonElement>(null);
 
     const [isEditingName, setIsEditingName] = useState(false);
@@ -843,138 +842,6 @@ function AccountInfo({
         />
     );
 
-    const toCheckedConfigItem = (
-        type: ConfigType,
-        candidates: Candidate[],
-        value: unknown,
-    ): ConfigValue | undefined => {
-        switch (type) {
-            case 'bool':
-            case 'single':
-                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-                    return value as ConfigValue;
-                }
-                break;
-            case 'int':
-                if (typeof value === 'number') return value;
-                break;
-            case 'text':
-                if (typeof value === 'string') return value;
-                break;
-            case 'time':
-                if (typeof value === 'string' && value.match(/^\d{2}:\d{2}$/) !== null) return value;
-                break;
-            case 'multi':
-            case 'multi_search': {
-                if (!Array.isArray(value)) break;
-                const checkedArray: (string | number)[] = [];
-                for (const item of value) {
-                    if (typeof item !== 'number' && typeof item !== 'string') continue;
-                    if (candidates.find((v) => item === v.value)) checkedArray.push(item);
-                }
-                return checkedArray;
-            }
-        }
-        return undefined;
-    };
-
-    const realImportByModule = (
-        module: ModuleResponse,
-        configs: Record<string, ConfigValue>,
-    ): Record<string, ConfigValue> => {
-        const uploadConfig: Record<string, ConfigValue> = {};
-        for (const moduleKey in module.info) {
-            if (configs[moduleKey] !== undefined && typeof configs[moduleKey] === 'boolean') {
-                uploadConfig[moduleKey] = configs[moduleKey];
-            }
-            const moduleConf = module.info[moduleKey].config;
-            for (const moduleConfKey in moduleConf) {
-                const moduleItem = moduleConf[moduleConfKey];
-                const confItem = toCheckedConfigItem(
-                    moduleItem.config_type,
-                    moduleItem.candidates,
-                    configs[moduleConfKey],
-                );
-                if (confItem !== undefined) {
-                    uploadConfig[moduleConfKey] = confItem;
-                }
-            }
-        }
-        return uploadConfig;
-    };
-
-    const handleImportConfigFile = async (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        event.target.value = '';
-        if (!file) return;
-
-        buttomLoading.onOpen();
-        try {
-            const rawCfg = await file.text();
-            let configs: Record<string, Record<string, ConfigValue>>;
-            try {
-                configs = JSON.parse(decodeURIComponent(atob(rawCfg.trim()))) as Record<
-                    string,
-                    Record<string, ConfigValue>
-                >;
-            } catch {
-                throw new Error('配置文件格式无效，请检查选取的配置文件。');
-            }
-
-            const accountDetail = await getAccount(alias);
-            const areas = accountDetail?.area || [];
-            if (!areas.length) {
-                throw new Error('该账号暂无可用区服，无法导入配置');
-            }
-
-            const configItems = await Promise.all(
-                areas.map((area: { key: string }) => getAccountConfig(alias, area.key)),
-            );
-            const uploadConfig: Record<string, ConfigValue> = {};
-            const importedFav: Record<string, string[]> = {};
-
-            configItems.forEach((value, index) => {
-                const areaKey = areas[index].key;
-                const areaConfig = configs[areaKey];
-                if (!areaConfig) return;
-
-                Object.assign(uploadConfig, realImportByModule(value, areaConfig));
-
-                for (const key in areaConfig) {
-                    if (key.startsWith('_fav_')) {
-                        importedFav[areaKey] = importedFav[areaKey] || [];
-                        if (areaConfig[key] === true) {
-                            importedFav[areaKey].push(key.slice(5));
-                        }
-                    } else if (uploadConfig[key] === undefined && areaConfig[key] !== undefined) {
-                        uploadConfig[key] = areaConfig[key];
-                    }
-                }
-            });
-
-            localStorage.setItem(`autopcr_fav_${alias}`, JSON.stringify(importedFav));
-            await putAccountConfigs(alias, uploadConfig);
-            toaster.create({ type: 'success', title: '配置导入成功' });
-            onToggle();
-        } catch (err) {
-            if (err instanceof AxiosError) {
-                toaster.create({
-                    type: 'error',
-                    title: '配置导入失败',
-                    description: (err.response?.data as string) || '网络错误',
-                });
-            } else {
-                toaster.create({
-                    type: 'error',
-                    title: '配置导入失败',
-                    description: (err as Error).message,
-                });
-            }
-        } finally {
-            buttomLoading.onClose();
-        }
-    };
-
     const renderActionButtons = (size: 'xs' | 'sm' | 'md' = 'xs', flexMode = false) => (
         <HStack
             gap={flexMode ? 0 : 1}
@@ -983,14 +850,6 @@ function AccountInfo({
             align="center"
             onClick={(e) => e.stopPropagation()}
         >
-            <input
-                ref={importFileRef}
-                type="file"
-                accept=".autopcrcfg"
-                style={{ display: 'none' }}
-                onChange={handleImportConfigFile}
-            />
-
             <Tooltip content="立刻清理" openDelay={0} closeDelay={0}>
                 <IconButton
                     aria-label="Clean Daily"
@@ -1005,17 +864,18 @@ function AccountInfo({
                 </IconButton>
             </Tooltip>
 
-            <Tooltip content="导入配置" openDelay={0} closeDelay={0}>
+            <Tooltip content="详细配置" openDelay={0} closeDelay={0}>
                 <IconButton
-                    aria-label="Import Config"
+                    aria-label="Settings"
                     size={size}
                     flex={flexMode ? '1' : undefined}
                     variant="ghost"
                     colorPalette="blue"
-                    onClick={() => importFileRef.current?.click()}
-                    loading={buttomLoading.open}
+                    as={Link}
+                    // @ts-ignore
+                    to={`${DashBoardRoute.to || ''}${alias}`}
                 >
-                    <FiUpload />
+                    <FiSettings />
                 </IconButton>
             </Tooltip>
 
@@ -1063,94 +923,19 @@ function AccountInfo({
                     </Flex>
                 </Table.Cell>
 
-                <Table.Cell px={2} py={3}>
-                    <Flex
-                        align="center"
-                        gap={2}
-                        minW={0}
-                        w="full"
-                        cursor="pointer"
-                        onClick={goDetail}
-                        title="进入详细设置"
-                    >
-                        {/* ✅ 补回内层 Flex 容器 */}
-                        <Flex align="center" gap={1} minW={0} flex="1" lineHeight="1">
-                            <Flex
-                                boxSize="2em"
-                                flexShrink={0}
-                                bg="blue.subtle"
-                                color="blue.fg"
-                                borderRadius="full"
-                                align="center"
-                                justify="center"
-                                fontSize="sm"
-                                lineHeight="1"
-                            >
-                                {displayName.charAt(0).toUpperCase()}
-                            </Flex>
-
-                            <Box
-                                onClick={(e) => e.stopPropagation()}
-                                display="flex"
-                                alignItems="center"
-                                h="2rem"
-                                fontSize="sm"
-                                flex="0 1 auto"
-                                minW={0}
-                            >
-                                {nameInput}
-                            </Box>
-
-                            {displayName !== alias && (
-                                <Text
-                                    as="span"
-                                    fontSize="xs"
-                                    color="fg.muted"
-                                                    whiteSpace="nowrap"
-                    lineHeight="1"
-                                >
-                                    {alias}
-                                </Text>
-                            )}
-                            {defaultAccount === account.name && (
-                                <Tag.Root size="sm" colorPalette="purple" variant="solid" flexShrink={0}>
-                                    <Tag.Label>默认</Tag.Label>
-                                </Tag.Root>
-                            )}
-                            {account.clan_forbid && (
-                                <Tag.Root size="sm" colorPalette="red" variant="solid" flexShrink={0}>
-                                    <Tag.Label>公会战禁用</Tag.Label>
-                                </Tag.Root>
-                            )}
-                        </Flex>
-
-                        <Box flexShrink={0} onClick={(e) => e.stopPropagation()}>
-                            <Alert
-                                leastDestructiveRef={cancelRef}
-                                isOpen={deleteConfirm.open}
-                                onClose={deleteConfirm.onClose}
-                                title="删除账号"
-                                body={`确定删除账号${alias}吗？`}
-                                onConfirm={handleDeleteAccount}
-                            >
-                                {' '}
-                            </Alert>
-                            <IconButton
-                                aria-label="Delete"
-                                size="xs"
-                                variant="ghost"
-                                colorPalette="gray"
-                                title="删除账号"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteConfirm.onOpen();
-                                }}
-                                _hover={{ bg: 'red.subtle', color: 'red.fg' }}
-                            >
-                                <FiX />
-                            </IconButton>
+                <Table.Cell px={0} py={3}>
+                    <HStack gap={2}>
+                        <Box w="32px" h="32px" bg="blue.subtle" color="blue.fg" borderRadius="full" display="flex" alignItems="center" justifyContent="center" fontSize="sm">
+                            {alias.charAt(0).toUpperCase()}
                         </Box>
-                    </Flex>
+                        <Stack gap={0}>
+                            <Text fontWeight="bold" fontSize="sm">{alias}</Text>
+                            <HStack gap={1}>
+                                {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
+                                {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
+                            </HStack>
+                        </Stack>
+                    </HStack>
                 </Table.Cell>
 
                 <Table.Cell
@@ -1273,7 +1058,7 @@ function AccountInfo({
                                 }}
                                 _hover={{ bg: 'red.subtle', color: 'red.fg' }}
                             >
-                                <FiX />
+                                <CloseButton />
                             </IconButton>
                         </Box>
                     </Flex>
