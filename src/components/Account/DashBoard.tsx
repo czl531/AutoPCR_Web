@@ -12,6 +12,7 @@ import {
     Table,
     Tag,
     Text,
+    Textarea,
 } from '@chakra-ui/react';
 import { FiActivity, FiBook, FiCheck, FiCopy, FiGrid, FiKey, FiLayers, FiList, FiSettings, FiStar, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
 import { Radio, RadioGroup } from '../../components/ui/radio';
@@ -721,6 +722,7 @@ function AccountInfo({
     };
 
     const nameInputRef = useRef<HTMLInputElement>(null);
+    const tableNameInputRef = useRef<HTMLTextAreaElement>(null);
 
     const startEditName = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -730,7 +732,7 @@ function AccountInfo({
 
     useEffect(() => {
         if (!isEditingName) return;
-        const el = nameInputRef.current;
+        const el = nameInputRef.current ?? tableNameInputRef.current;
         if (!el) return;
         el.focus();
         // 光标放到末尾，避免整段被选中
@@ -842,6 +844,51 @@ function AccountInfo({
         />
     );
 
+    const tableNameInput = isEditingName ? (
+        <Textarea
+            ref={tableNameInputRef}
+            value={nameDraft}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setNameDraft(e.target.value)}
+            onCompositionStart={() => {
+                composingRef.current = true;
+            }}
+            onCompositionEnd={(e) => {
+                composingRef.current = false;
+                setNameDraft((e.target as HTMLTextAreaElement).value);
+            }}
+            onBlur={() => {
+                if (!composingRef.current) commitDisplayName();
+            }}
+            onKeyDown={(e) => {
+                if (composingRef.current) return;
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setNameDraft(displayName);
+                    setIsEditingName(false);
+                }
+            }}
+            minW="4rem"
+            w="full"
+            minH="2rem"
+            fieldSizing="content"
+            resize="none"
+            whiteSpace="normal"
+            overflowWrap="anywhere"
+        />
+    ) : (
+        <Text
+            minW="4rem"
+            whiteSpace="normal"
+            overflowWrap="anywhere"
+            cursor="text"
+            fontWeight="bold"
+            onClick={startEditName}
+        >
+            {displayName}
+        </Text>
+    );
+
     const renderActionButtons = (size: 'xs' | 'sm' | 'md' = 'xs', flexMode = false) => (
         <HStack
             gap={flexMode ? 0 : 1}
@@ -925,17 +972,8 @@ function AccountInfo({
 
                 <Table.Cell px={0} py={3}>
                     <Stack gap={0}>
-                            <Box
-                                onClick={(e) => e.stopPropagation()}
-                                display="flex"
-                                alignItems="center"
-                                h="2rem"
-                                fontSize="sm"
-                                w="6rem"
-                                maxW="6rem"
-                                overflow="hidden"
-                            >
-                                {nameInput}
+                            <Box minW="5rem" maxW="100%" onClick={(e) => e.stopPropagation()}>
+                                {tableNameInput}
                             </Box>
                             <HStack gap={1}>
                                 {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
