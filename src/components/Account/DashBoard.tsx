@@ -850,20 +850,6 @@ function AccountInfo({
             align="center"
             onClick={(e) => e.stopPropagation()}
         >
-            <Tooltip content="立刻清理" openDelay={0} closeDelay={0}>
-                <IconButton
-                    aria-label="Clean Daily"
-                    size={size}
-                    flex={flexMode ? '1' : undefined}
-                    variant="ghost"
-                    colorPalette="orange"
-                    onClick={handleCleanDaily}
-                    loading={buttomLoading.open}
-                >
-                    <FiTarget />
-                </IconButton>
-            </Tooltip>
-
             <Tooltip content="详细配置" openDelay={0} closeDelay={0}>
                 <IconButton
                     aria-label="Settings"
@@ -876,6 +862,20 @@ function AccountInfo({
                     to={`${DashBoardRoute.to || ''}${alias}`}
                 >
                     <FiSettings />
+                </IconButton>
+            </Tooltip>
+
+            <Tooltip content="立刻清理" openDelay={0} closeDelay={0}>
+                <IconButton
+                    aria-label="Clean Daily"
+                    size={size}
+                    flex={flexMode ? '1' : undefined}
+                    variant="ghost"
+                    colorPalette="orange"
+                    onClick={handleCleanDaily}
+                    loading={buttomLoading.open}
+                >
+                    <FiTarget />
                 </IconButton>
             </Tooltip>
 
