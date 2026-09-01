@@ -508,7 +508,7 @@ export function DashBoard() {
                                 <Table.ColumnHeader px={0} fontSize="md" py={4} fontWeight="bold" width="20%" minWidth="80px">
                                     账号
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="40%" minWidth="220px">
+                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="35%" minWidth="200px">
                                     最近记录
                                 </Table.ColumnHeader>
                                 <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="25%">
@@ -931,8 +931,8 @@ function AccountInfo({
                                 alignItems="center"
                                 h="2rem"
                                 fontSize="sm"
-                                w="7rem"
-                                maxW="7rem"
+                                w="6rem"
+                                maxW="6rem"
                                 overflow="hidden"
                             >
                                 {nameInput}
