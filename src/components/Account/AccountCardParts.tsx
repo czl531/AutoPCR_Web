@@ -3,8 +3,8 @@
 import { Spinner, Tag } from '@chakra-ui/react';
 import { Checkbox } from '../ui/checkbox';
 
-/** 圆形勾选框：表格行与卡片头部共用同一形状 */
-export function RoundCheckbox({ checked, onToggle }: { checked?: boolean; onToggle?: () => void }) {
+/** 账号勾选框：表格行与卡片头部共用。 */
+export function AccountCheckbox({ checked, onToggle }: { checked?: boolean; onToggle?: () => void }) {
     return (
         <Checkbox
             checked={checked}
@@ -13,7 +13,6 @@ export function RoundCheckbox({ checked, onToggle }: { checked?: boolean; onTogg
             size="md"
             css={{
                 '& [data-part=control], & .chakra-checkbox__control': {
-                    borderRadius: '9999px',
                     width: '1.25rem',
                     height: '1.25rem',
                 },

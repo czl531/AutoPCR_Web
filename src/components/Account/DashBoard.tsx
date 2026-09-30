@@ -565,51 +565,36 @@ export function DashBoard() {
                 gap={2}
             >
                 <HStack gap={2} alignItems="center">
-                    <Box w="80px" flexShrink={0} fontSize="xs" color="fg.muted" lineHeight="1.5" display="flex" alignItems="center">
-                        <Text whiteSpace="nowrap">
-                            {selectedAccounts.length > 0
-                                ? '只执行勾选账号'
-                                : batchAccounts.length > 0
-                                    ? '只执行默认账号'
-                                    : '执行全部账号'}
-                        </Text>
-                    </Box>
-                    <Button
-                        size="sm"
-                        px={textFitPadding('默认账号')}
-                        colorPalette="purple"
-                        variant={selectedInBatch ? 'solid' : 'ghost'}
-                        borderWidth="1px"
-                        borderColor="currentColor"
-                        onClick={handleToggleBatchForSelected}
-                    >
-                        <FiStar fill={selectedInBatch ? 'currentColor' : 'none'} /> {selectedInBatch ? '取消默认' : '默认账号'}
-                    </Button>
                     <Button
                         size="sm"
                         px={textFitPadding('清理全部日常')}
                         colorPalette="orange"
                         variant="ghost"
-                        borderWidth="1px"
-                        borderColor="currentColor"
                         onClick={handleCleanDailyAll}
                         loading={busyAccounts.size > 0}
                     >
-                        <FiTarget /> 清理全部日常
+                        <FiTarget /> {selectedAccounts.length > 0 ? `清选择(${selectedAccounts.length})` : '清理全部'}
                     </Button>
                     <Button
                         size="sm"
                         px={textFitPadding('批量运行')}
                         colorPalette="blue"
                         variant="ghost"
-                        borderWidth="1px"
-                        borderColor="currentColor"
                         title="配置后端定时批量任务（BATCH_RUNNER）运行哪些账号"
                         onClick={() => {
                             void navigate({ to: `${DashBoardRoute.to || ''}${encodeURIComponent(BATCH_RUNNER)}` as any });
                         }}
                     >
                         <FiLayers /> 批量运行
+                    </Button>
+                    <Button
+                        size="sm"
+                        px={textFitPadding('默认账号')}
+                        colorPalette="purple"
+                        variant={selectedInBatch ? 'solid' : 'ghost'}
+                        onClick={handleToggleBatchForSelected}
+                    >
+                        <FiStar fill={selectedInBatch ? 'currentColor' : 'none'} /> {selectedInBatch ? '取消默认' : '默认账号'}
                     </Button>
                 </HStack>
 
@@ -810,7 +795,6 @@ export function DashBoard() {
                                         size="md"
                                         css={{
                                             '& [data-part=control], & .chakra-checkbox__control': {
-                                                borderRadius: '9999px',
                                                 width: '1.25rem',
                                                 height: '1.25rem',
                                             },

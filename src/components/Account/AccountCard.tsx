@@ -1,6 +1,6 @@
 import { AccountInfo as AccountInfoInterface } from '@interfaces/UserInfo';
-import { Box, Card, Flex, HStack, Input, Table, Text, useDisclosure } from '@chakra-ui/react';
-import { FiActivity, FiCheck, FiCopy, FiTarget, FiUpload, FiUserX, FiX } from 'react-icons/fi';
+import { Box, Card, Flex, HStack, Input, Table, Tag, Text, useDisclosure } from '@chakra-ui/react';
+import { FiActivity, FiCheck, FiCopy, FiSettings, FiTarget, FiUserX, FiX } from 'react-icons/fi';
 import React, { ChangeEvent, useRef } from 'react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
@@ -16,7 +16,7 @@ import { delAccount, getAccount, getAccountDailyResultList, postAccountAreaDaily
 import { getErrorDescription } from './Config';
 import { dailyCleanRegistry as handle, DISPLAY_NAME_KEY, getDisplayName, emitDailyFinished, safeSetItem, safeRemoveItem, importConfigFile, busyAccountsRef } from './accountShared';
 import { clearAreaConfigCache } from './Area';
-import { RoundCheckbox, AccountTags, StatusTag } from './AccountCardParts';
+import { AccountCheckbox, AccountTags, StatusTag } from './AccountCardParts';
 interface AccountInfoProps {
     account: AccountInfoInterface;
     onToggle: () => void;
@@ -72,6 +72,15 @@ export function AccountInfo({
     const clean = account.daily_clean_time;
     const cleanStatus = clean?.status || '未知';
     const cleanTime = clean?.time || '';
+    const stamina = clean?.stamina;
+    const staminaMax = clean?.stamina_max;
+    const staminaText = typeof stamina === 'number'
+        ? typeof staminaMax === 'number' && staminaMax > 0 ? `${stamina}/${staminaMax}` : String(stamina)
+        : '-';
+    const isStaminaOverflow = typeof stamina === 'number'
+        && typeof staminaMax === 'number'
+        && staminaMax > 0
+        && stamina > staminaMax;
 
     const statusMeta =
         cleanStatus === '成功' || cleanStatus === '跳过'
@@ -367,6 +376,19 @@ export function AccountInfo({
                 onChange={handleImportConfigFile}
             />
 
+            <Tooltip content="详细配置" openDelay={0} closeDelay={0}>
+                <IconButton
+                    aria-label="Open account settings"
+                    size={size}
+                    flex={flexMode ? '1' : undefined}
+                    variant="ghost"
+                    colorPalette="blue"
+                    onClick={goDetail}
+                >
+                    <FiSettings />
+                </IconButton>
+            </Tooltip>
+
             <Tooltip content="立刻清理" openDelay={0} closeDelay={0}>
                 <IconButton
                     aria-label="Clean Daily"
@@ -382,7 +404,7 @@ export function AccountInfo({
                 </IconButton>
             </Tooltip>
 
-            <Tooltip content="导入配置" openDelay={0} closeDelay={0}>
+            {/* <Tooltip content="导入配置" openDelay={0} closeDelay={0}>
                 <IconButton
                     aria-label="Import Config"
                     size={size}
@@ -395,7 +417,7 @@ export function AccountInfo({
                 >
                     <FiUpload />
                 </IconButton>
-            </Tooltip>
+            </Tooltip> */}
 
             <Tooltip content="同步配置" openDelay={0} closeDelay={0}>
                 <IconButton
@@ -434,7 +456,7 @@ export function AccountInfo({
             <Table.Row key={alias} bg="bg.panel" _hover={{ bg: 'bg.muted' }}>
                 <Table.Cell px={2} py={3} width="56px" onClick={(e) => e.stopPropagation()}>
                     <Flex align="center" justify="center" minH="2.75em" px={1} py={1}>
-                        <RoundCheckbox checked={isSelected} onToggle={onToggleSelect} />
+                        <AccountCheckbox checked={isSelected} onToggle={onToggleSelect} />
                     </Flex>
                 </Table.Cell>
 
@@ -499,38 +521,6 @@ export function AccountInfo({
                                 <AccountTags isDefault={batchAccounts.includes(account.name)} clanForbid={account.clan_forbid} compact />
                             </Flex>
                         </Flex>
-
-                        <Box flexShrink={0} onClick={(e) => e.stopPropagation()}>
-                            <Alert
-                                leastDestructiveRef={cancelRef}
-                                isOpen={deleteConfirm.open}
-                                onClose={deleteConfirm.onClose}
-                                title="删除账号"
-                                body={`确定删除账号${alias}吗？`}
-                                onConfirm={handleDeleteAccount}
-                            >
-                                {' '}
-                            </Alert>
-                            {/* 热区略小、叉图形略大 */}
-                            <IconButton
-                                aria-label="Delete"
-                                size="xs"
-                                variant="ghost"
-                                colorPalette="gray"
-                                title="删除账号"
-                                minW="1.5rem"
-                                h="1.5rem"
-                                p={0}
-                                fontSize="1.25rem"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteConfirm.onOpen();
-                                }}
-                                _hover={{ bg: 'red.subtle', color: 'red.fg' }}
-                            >
-                                <FiX size={18} strokeWidth={2.5} />
-                            </IconButton>
-                        </Box>
                     </Flex>
                 </Table.Cell>
 
@@ -542,13 +532,17 @@ export function AccountInfo({
                     onClick={goDetail}
                     title="进入详细设置"
                 >
-                    <Flex align="center" gap={2} minW={0}>
+                    <Flex align="center" gap={2} minW={0} wrap="wrap">
                         <StatusTag
                             isBusy={isBusy}
                             color={statusMeta.color}
                             icon={statusMeta.icon}
                             label={`${statusMeta.label}${cleanTime ? ` ${cleanTime}` : ''}`}
                         />
+                        <Tag.Root size="sm" colorPalette={isStaminaOverflow ? 'red' : 'blue'} variant="subtle" flexShrink={0}>
+                            <Tag.StartElement><FiActivity /></Tag.StartElement>
+                            <Tag.Label>体力 {staminaText}</Tag.Label>
+                        </Tag.Root>
                     </Flex>
                 </Table.Cell>
 
@@ -593,7 +587,7 @@ export function AccountInfo({
                         title="选择账号"
                         cursor="default"
                     >
-                        <RoundCheckbox checked={isSelected} onToggle={onToggleSelect} />
+                        <AccountCheckbox checked={isSelected} onToggle={onToggleSelect} />
                     </Box>
 
                     <Flex align="center" gap={2} minW={0} flex="1" overflow="hidden">
@@ -701,6 +695,12 @@ export function AccountInfo({
                             状态
                         </Text>
                         <StatusTag isBusy={isBusy} color={statusMeta.color} icon={statusMeta.icon} label={cleanStatus} />
+                    </Flex>
+                    <Flex justify="space-between" align="center" mt={1} gap={2}>
+                        <Text fontSize="xs" color="fg.muted">体力</Text>
+                        <Text fontSize="xs" fontWeight="bold" color={isStaminaOverflow ? 'red.fg' : undefined}>
+                            {staminaText}
+                        </Text>
                     </Flex>
                 </Box>
             </Card.Body>
